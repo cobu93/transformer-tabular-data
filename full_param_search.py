@@ -5,8 +5,7 @@ import tensorboard
 import os
 import signal
 
-# datasets = ["adult", "helena", "jasmine", "ldpa"]
-datasets = ["adult"]
+datasets = ["adult", "helena", "jasmine", "ldpa"]
 aggregators = ["cls", "concatenate", "rnn"]
 
 
