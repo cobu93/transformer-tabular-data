@@ -1,0 +1,2 @@
+train_loss,valid_loss,balanced_accuracy,accuracy,roc_auc,f1,recall,time_this_iter_s,done,timesteps_total,episodes_total,training_iteration,trial_id,experiment_id,date,timestamp,time_total_s,pid,hostname,node_ip,time_since_restore,timesteps_since_restore,iterations_since_restore
+2.5621059877916874,4.486687856269525,0.5,0.4882943143812709,0.5,0.0,0.0,9.531511306762695,False,,,1,08c2140c,832885e1f23a4ea6a46cbc749b7da5da,2022-03-06_23-04-25,1646629465,9.531511306762695,22632,uriel,192.168.100.15,9.531511306762695,0,1

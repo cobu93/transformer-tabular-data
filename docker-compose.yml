@@ -1,0 +1,26 @@
+services:
+  test:
+    image: pytorch/pytorch:1.8.1-cuda11.1-cudnn8-devel
+    command: python -c "import torch;print('Is it working?', torch.cuda.is_available())"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+
+  param-search:
+    ports:
+      - "6006:6006"
+    volumes:
+      - ./:/app
+    build:
+      context: ./
+      dockerfile: param_search.dockerfile
+    command: "python full_param_search.py"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]

@@ -1,0 +1,8 @@
+{
+  "dropout": 0.2673034948374277,
+  "embedding_size": 512,
+  "n_head": 2,
+  "n_hid": 256,
+  "n_layers": 2,
+  "optimizer__lr": 0.017483546830053015
+}
