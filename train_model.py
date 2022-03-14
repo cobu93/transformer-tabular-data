@@ -11,7 +11,10 @@ from ray.tune.schedulers import AsyncHyperBandScheduler
 
 import inspect
 import argparse
+import skorch
+import os
 
+from torch.utils import tensorboard
 
 #####################################################
 # Configuration
@@ -38,8 +41,8 @@ SEED = 11
 N_SAMPLES = 30
 
 BATCH_SIZE = 128
-MAX_EPOCHS = 500 
-EARLY_STOPPING = 15
+MAX_EPOCHS = 1000
+EARLY_STOPPING = 30
 MAX_CHECKPOINTS = 10
 multiclass = False
 
@@ -85,18 +88,41 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
         "max_epochs": MAX_EPOCHS,
         "n_output": n_labels, # The number of output neurons
         "need_weights": False,
-        "verbose": 0
+        "verbose": 1
         
     }
+
+    def key_mapper_fn(key):
+        return "best_model/" + key
+
+    if os.path.exists(os.path.join(CHECKPOINT_DIR, "best_model/.fitted")):
+        print("Fitted before! I'm not going to do anything")
+        return
+
     
+    checkpoint = skorch.callbacks.Checkpoint(monitor="valid_loss_best", dirname=os.path.join(CHECKPOINT_DIR, "best_model"))
+
     model = nn_utils.build_transformer_model(
                 train_indices,
-                val_indices,
-                nn_utils.get_default_callbacks(seed=SEED, multiclass=multiclass),
+                val_indices,                
+                nn_utils.get_default_train_callbacks(seed=SEED, multiclass=multiclass) + [
+                    ("early_stopping", skorch.callbacks.EarlyStopping(monitor="valid_loss", patience=EARLY_STOPPING)),
+                    ("checkpoint", checkpoint),
+                    ("load_init_state", skorch.callbacks.LoadInitState(checkpoint)),
+                    ("tensorboard", skorch.callbacks.TensorBoard(tensorboard.writer.SummaryWriter(
+                        log_dir=os.path.join(CHECKPOINT_DIR, "best_model", "tensorboard"), 
+                        filename_suffix="best_model"
+                    ), key_mapper=key_mapper_fn
+                    )),
+                    ("lr_scheduler", skorch.callbacks.LRScheduler(policy="ReduceLROnPlateau", monitor="valid_loss", patience=EARLY_STOPPING // 3))
+                ],
                 **model_params
                 )
-    
+        
     model = model.fit(X=all_features, y=all_labels)
+
+    with open(os.path.join(CHECKPOINT_DIR, "best_model/.fitted"), "w") as f:
+        f.write("Fitted before")
 
 #####################################################
 # Dataset and components
@@ -164,45 +190,15 @@ else:
 #####################################################
 # Hyperparameter search
 #####################################################
-resume_modes = ["AUTO", "ERRORED_ONLY"]
+analysis = tune.run(
+    trainable,
+    resume="AUTO",
+    local_dir=CHECKPOINT_DIR, 
+    name="param_search"    
+)
 
+best_config = analysis.get_best_config(metric="valid_loss", mode="min")
+del analysis
+print("Best config: ", best_config)
 
-for try_cnt, resume_mode in enumerate(resume_modes):
-    try:
-        analysis = tune.run(
-            trainable,
-            config=search_space_config.get_search_space(),
-            resources_per_trial={
-                "gpu": 1,
-                "cpu": 6
-            },
-            search_alg=OptunaSearch(
-                metric="valid_loss",
-                mode="min",
-                sampler=optuna.samplers.TPESampler()
-            ),
-            num_samples=N_SAMPLES,
-            fail_fast=True,
-            checkpoint_score_attr="min-valid_loss",
-            keep_checkpoints_num=MAX_CHECKPOINTS,
-            resume=resume_mode,
-            local_dir=CHECKPOINT_DIR, 
-            name="param_search",
-            scheduler=AsyncHyperBandScheduler(
-                            time_attr="training_iteration",
-                            metric="valid_loss",
-                            mode="min",
-                            grace_period=EARLY_STOPPING
-                        )
-        )
-
-        break
-    except Exception as e:
-
-        if try_cnt + 1 == len(resume_modes):
-            raise(e)
-
-        print(e)
-        print("Retrying in second mode")
-
-print("Best config: ", analysis.get_best_config(metric="valid_loss", mode="min"))
+trainable(best_config)

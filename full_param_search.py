@@ -8,7 +8,6 @@ import signal
 datasets = ["adult", "helena", "jasmine", "ldpa"]
 aggregators = ["cls", "concatenate", "rnn"]
 
-
 def tensorboard_run(logdir):
     tb = tensorboard.program.TensorBoard()
     tb.configure(bind_all=True, logdir=logdir)
@@ -23,6 +22,8 @@ def tensorboard_run(logdir):
             break
     print()
     print("Shutting down")
+
+exit_codes = {}
 
 for dataset in datasets:
     for aggregator in aggregators:
@@ -42,9 +43,26 @@ for dataset in datasets:
         param_search_process.start()
         tensorboard_process.start()
         param_search_process.join()
-        os.kill(tensorboard_process.pid, signal.SIGINT)    
+        exit_codes[f"{dataset}.{aggregator}"] = param_search_process.exitcode
 
-print("Attemtping to upload to git")
+        
+        if param_search_process.exitcode == 0:
+            train_best_process = multiprocessing.Process(
+                target=subprocess.check_call,
+                args=([f"python train_model.py {dataset} {aggregator}"],),
+                kwargs={"shell": True}
+            )
+        
+            train_best_process.start()
+            train_best_process.join()
+        
+        os.kill(tensorboard_process.pid, signal.SIGINT)   
+
+
+print("The exit codes were:")
+
+for key in exit_codes:
+    print(key, "--->", exit_codes[key], f"[{'SUCCESS' if exit_codes[key] == 0 else 'FAILURE' }]")
 
 #subprocess.check_call(
 #    ["git add -A && git commit -m 'Automatic uploading after param search execution' && git pull && git push"],

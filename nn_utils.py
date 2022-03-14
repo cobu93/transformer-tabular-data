@@ -162,3 +162,23 @@ def get_default_callbacks(seed=11, multiclass=False):
         ("recall", skorch.callbacks.EpochScoring(metrics.roc_auc_score, lower_is_better=False)),
         ("report_tune", ReportTune())
     ]
+
+
+
+def get_default_train_callbacks(seed=11, multiclass=False):
+    if multiclass:
+        return [
+            ("fix_random_seed", FixRandomSeed(seed=seed)),
+            ("balanced_accuracy", skorch.callbacks.EpochScoring(metrics.balanced_accuracy_score, lower_is_better=False)),
+            ("accuracy", skorch.callbacks.EpochScoring(metrics.accuracy_score, lower_is_better=False))
+        ]
+
+    return [
+        ("fix_random_seed", FixRandomSeed(seed=seed)),
+        ("balanced_accuracy", skorch.callbacks.EpochScoring(metrics.balanced_accuracy_score, lower_is_better=False)),
+        ("accuracy", skorch.callbacks.EpochScoring(metrics.accuracy_score, lower_is_better=False)),
+        ("roc_auc", skorch.callbacks.EpochScoring(metrics.roc_auc_score, lower_is_better=False)),
+        ("f1", skorch.callbacks.EpochScoring(metrics.f1_score, lower_is_better=False)),
+        ("precision", skorch.callbacks.EpochScoring(metrics.recall_score, lower_is_better=False)),
+        ("recall", skorch.callbacks.EpochScoring(metrics.roc_auc_score, lower_is_better=False))
+    ]
