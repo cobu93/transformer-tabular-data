@@ -6,6 +6,8 @@ import json
 import openml
 
 import numpy as np
+from sklearn.impute import KNNImputer
+from sklearn.preprocessing import LabelEncoder
 
 def get_default_config(columns, target, numerical_cols, df):
     
@@ -21,20 +23,10 @@ def get_default_config(columns, target, numerical_cols, df):
     return recommended
 
 def download_data(
-                name,
+                dataset_did,
                 dir_name
                 ):
-
-    # Retrieve dataset information
-    print("Retrieving dataset information...")
-    openml_list = openml.datasets.list_datasets()  # returns a dict
-    # Show a nice table with some key data properties
-    datalist = pd.DataFrame.from_dict(openml_list, orient="index")
-    datalist = datalist[["did", "name", "NumberOfInstances", "NumberOfFeatures", "NumberOfClasses"]]
-    datasets = datalist[datalist.name == name]
-    print("Available datasets:")
-    print(datasets)
-    dataset_did = int(datasets["did"].values[0])
+    
     print("Dataset did: {}".format(dataset_did))
     dataset = openml.datasets.get_dataset(dataset_did, download_data=False)
     print("Dataset info:")
@@ -70,6 +62,7 @@ def download_data(
             json.dump(ds_info, f)        
     else:
         print("Data exists!")
+    
         ds_info = get_data_info(dir_name)
         X, _ = get_data(
             dir_name, 
@@ -113,14 +106,21 @@ def get_data_info(dir_name):
     return columns, numerical_cols, categorical_cols, target_col, target_mapping
 
 def get_data(dir_name, columns, target_col, target_mapping):
-    
+        
     # Open data
     df = pd.read_csv(os.path.join(dir_name, "dataset.csv"), header=0, names=columns, na_values=["?", "NA", "N/A", "nan", "NAN", "-", "NaN"])
 
-    # Fill nan with median
-    df = df.fillna(df.median())
-    df = df.fillna(df.mode().iloc[0])
+    # Fill nan with mean of closest neighbors
+    X = df.drop(target_col, axis=1)
     
+    X = X.apply(lambda series: pd.Series(
+        LabelEncoder().fit_transform(series[series.notnull()]),
+        index=series[series.notnull()].index
+    ))
+
+    imputer = KNNImputer(n_neighbors=10)
+    df.loc[:, X.columns] = imputer.fit_transform(X)
+
     # Replace target mapping
     df[target_col] = df[target_col].replace(target_mapping)
 
