@@ -31,12 +31,11 @@ class AdultTransformerConfig(TransformerConfig):
             ]
     
     def get_aggregator(self, embedding_size, *args, **kwargs) -> BaseAggregator:
-        return None
+        return MaxAggregator(embedding_size)
 
     
     def get_preprocessor(self, *args, **kwargs) -> BasePreprocessor:
         return IdentityPreprocessor()
-
 
 class AdultSearchSpaceConfig(SearchSpaceConfig):
     def get_search_space(self):
@@ -49,8 +48,6 @@ class AdultSearchSpaceConfig(SearchSpaceConfig):
             "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024]),
             "numerical_passthrough": tune.choice([False, True])
         }
-
-
 
 class AdultDatasetConfig(DatasetConfig):
 

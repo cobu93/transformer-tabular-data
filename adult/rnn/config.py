@@ -57,6 +57,7 @@ class AdultSearchSpaceConfig(SearchSpaceConfig):
             "n_hid": tune.choice([32, 64, 128, 256, 512, 1024]), # Size of the MLP inside each transformer encoder layer
             "dropout": tune.uniform(0, 0.5), # Used dropout
             "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024]),
+            "numerical_passthrough": tune.choice([False, True]),
 
             # Exclusive RNN param search
             "aggregator__cell": tune.choice(["LSTM", "GRU"]),
@@ -84,7 +85,7 @@ class AdultDatasetConfig(DatasetConfig):
 
     def download(self):
         download_data(
-                "adult",
+                1590,
                 self.dir_name 
                 )
 
