@@ -1,6 +1,6 @@
 tensorboard==2.6.0
 skorch==0.10.0 
-ndsl-attn-fs-archs==0.0.5
+ndsl-attn-fs-archs==0.0.6
 optuna==2.10.0
 ray[tune]==1.10.0
 openml==0.11.0

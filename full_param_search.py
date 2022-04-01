@@ -5,8 +5,8 @@ import tensorboard
 import os
 import signal
 
-datasets = ["adult", "helena", "jasmine", "ldpa"]
-aggregators = ["cls", "concatenate", "rnn"]
+datasets = ["adult", "jasmine"]
+aggregators = ["cls", "concatenate", "rnn", "sum", "mean", "max"]
 
 def tensorboard_run(logdir):
     tb = tensorboard.program.TensorBoard()
@@ -28,6 +28,9 @@ exit_codes = {}
 for dataset in datasets:
     for aggregator in aggregators:
         print(f"Trying {dataset}.{aggregator}")
+
+        if not os.path.exists(f"{dataset}/{aggregator}/checkpoint"):
+            os.mkdir(f"{dataset}/{aggregator}/checkpoint")
 
         param_search_process = multiprocessing.Process(
             target=subprocess.check_call,
