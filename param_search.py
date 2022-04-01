@@ -177,21 +177,21 @@ for try_cnt, resume_mode in enumerate(resume_modes):
                 "cpu": 6
             },
             search_alg=OptunaSearch(
-                metric="valid_loss",
-                mode="min",
+                metric="balanced_accuracy",
+                mode="max",
                 sampler=optuna.samplers.TPESampler()
             ),
             num_samples=N_SAMPLES,
             fail_fast=True,
-            checkpoint_score_attr="min-valid_loss",
+            checkpoint_score_attr="max-balanced_accuracy",
             keep_checkpoints_num=MAX_CHECKPOINTS,
             resume=resume_mode,
             local_dir=CHECKPOINT_DIR, 
             name="param_search",
             scheduler=AsyncHyperBandScheduler(
                             time_attr="training_iteration",
-                            metric="valid_loss",
-                            mode="min",
+                            metric="balanced_accuracy",
+                            mode="max",
                             grace_period=EARLY_STOPPING
                         )
         )
@@ -205,4 +205,4 @@ for try_cnt, resume_mode in enumerate(resume_modes):
         print(e)
         print("Retrying in second mode")
 
-print("Best config: ", analysis.get_best_config(metric="valid_loss", mode="min"))
+print("Best config: ", analysis.get_best_config(metric="balanced_accuracy", mode="max"))
