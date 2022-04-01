@@ -32,6 +32,7 @@ def build_transformer_model(
     aggregator=None, # The aggregator for output vectors before decoder
     preprocessor=None,
     need_weights=False,
+    numerical_passthrough=False,
     **kwargs
     ):
 
@@ -45,7 +46,8 @@ def build_transformer_model(
         dropout=dropout, # Used dropout
         aggregator=aggregator, # The aggregator for output vectors before decoder
         preprocessor=preprocessor,
-        need_weights=need_weights
+        need_weights=need_weights,
+        numerical_passthrough=numerical_passthrough
     )
 
     model = skorch.NeuralNetClassifier(
