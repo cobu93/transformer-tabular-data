@@ -5,7 +5,7 @@ import tensorboard
 import os
 import signal
 
-datasets = ["adult", "jasmine"]
+datasets = ["sylvine", "anneal", "adult", "jasmine", "nomao"]
 aggregators = ["cls", "concatenate", "rnn", "sum", "mean", "max"]
 
 def tensorboard_run(logdir):
