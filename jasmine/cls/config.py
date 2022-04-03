@@ -176,7 +176,8 @@ class JasmineSearchSpaceConfig(SearchSpaceConfig):
             "n_head": tune.choice([1, 2, 4, 8, 16, 32]), # Number of heads per layer
             "n_hid": tune.choice([32, 64, 128, 256, 512, 1024]), # Size of the MLP inside each transformer encoder layer
             "dropout": tune.uniform(0, 0.5), # Used dropout
-            "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024])
+            "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024]),
+            "numerical_passthrough": tune.choice([False, True])
         }
 
 class JasmineDatasetConfig(DatasetConfig):

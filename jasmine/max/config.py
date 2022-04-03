@@ -160,25 +160,12 @@ class JasmineTransformerConfig(TransformerConfig):
             CategoricalOneHotEncoder(embedding_size, 2)
             ]
     
-    def get_aggregator(self, embedding_size, hidden_size=128, **kwargs) -> BaseAggregator:
-
-        kwargs = {
-            "input_size": embedding_size, 
-            "output_size": hidden_size,
-            "hidden_size": hidden_size,
-            "cell": kwargs["cell"],
-            "num_layers": kwargs["num_layers"],
-            "dropout": kwargs["dropout"]
-        }
-
-        return RNNAggregator(
-            **kwargs
-        )
+    def get_aggregator(self, embedding_size, *args, **kwargs) -> BaseAggregator:
+        return MaxAggregator(embedding_size)
 
     
     def get_preprocessor(self, *args, **kwargs) -> BasePreprocessor:
         return IdentityPreprocessor()
-
 
 class JasmineSearchSpaceConfig(SearchSpaceConfig):
     def get_search_space(self):
@@ -189,13 +176,7 @@ class JasmineSearchSpaceConfig(SearchSpaceConfig):
             "n_hid": tune.choice([32, 64, 128, 256, 512, 1024]), # Size of the MLP inside each transformer encoder layer
             "dropout": tune.uniform(0, 0.5), # Used dropout
             "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024]),
-            "numerical_passthrough": tune.choice([False, True]),
-
-            # Exclusive RNN param search
-            "aggregator__cell": tune.choice(["LSTM", "GRU"]),
-            "aggregator__hidden_size": tune.choice([32, 64, 128, 256, 512, 1024]),
-            "aggregator__num_layers": tune.randint(1, 3),
-            "aggregator__dropout": tune.uniform(0, 0.5)
+            "numerical_passthrough": tune.choice([False, True])
         }
 
 class JasmineDatasetConfig(DatasetConfig):

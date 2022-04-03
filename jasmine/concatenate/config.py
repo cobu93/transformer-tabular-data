@@ -161,7 +161,7 @@ class JasmineTransformerConfig(TransformerConfig):
             ]
     
     def get_aggregator(self, embedding_size, *args, **kwargs) -> BaseAggregator:
-        return ConcatenateAggregator(len(self.get_encoders(embedding_size)) * embedding_size)
+        return None
 
     
     def get_preprocessor(self, *args, **kwargs) -> BasePreprocessor:
@@ -176,7 +176,8 @@ class JasmineSearchSpaceConfig(SearchSpaceConfig):
             "n_head": tune.choice([1, 2, 4, 8, 16, 32]), # Number of heads per layer
             "n_hid": tune.choice([32, 64, 128, 256, 512, 1024]), # Size of the MLP inside each transformer encoder layer
             "dropout": tune.uniform(0, 0.5), # Used dropout
-            "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024])
+            "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024]),
+            "numerical_passthrough": tune.choice([False, True])
         }
 
 
