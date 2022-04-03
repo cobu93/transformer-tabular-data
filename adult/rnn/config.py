@@ -35,8 +35,10 @@ class AdultTransformerConfig(TransformerConfig):
         kwargs = {
             "input_size": embedding_size, 
             "output_size": hidden_size,
-            "hidden_size": hidden_size,
-            **kwargs
+            "hidden_size": hidden_size,            
+            "cell": kwargs["cell"],
+            "num_layers": kwargs["num_layers"],
+            "dropout": kwargs["dropout"]
         }
 
         return RNNAggregator(

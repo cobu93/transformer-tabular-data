@@ -75,9 +75,9 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
 
     model_params = {
         **config,
-        "encoders": transformer_config.get_encoders(embedding_size, **encoders_params),
-        "aggregator": transformer_config.get_aggregator(embedding_size, **aggregator_params),
-        "preprocessor": transformer_config.get_preprocessor(**preprocessor_params),
+        "encoders": transformer_config.get_encoders(embedding_size, **{**config, **encoders_params}),
+        "aggregator": transformer_config.get_aggregator(embedding_size, **{**config, **aggregator_params}),
+        "preprocessor": transformer_config.get_preprocessor(**{**config, **preprocessor_params}),
         "optimizer": torch.optim.SGD,
         "criterion": criterion,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
