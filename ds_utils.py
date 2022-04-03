@@ -46,6 +46,9 @@ def download_data(
         )
 
         X[target] = y
+        X = X.dropna(axis=1, how="all")
+        attribute_names = X.columns.to_list()
+        attribute_names.remove(target)
         X.to_csv(os.path.join(dir_name, "dataset.csv"), index=False)
 
         labels = y.unique()
@@ -109,7 +112,7 @@ def get_data(dir_name, columns, target_col, target_mapping):
         
     # Open data
     df = pd.read_csv(os.path.join(dir_name, "dataset.csv"), header=0, names=columns, na_values=["?", "NA", "N/A", "nan", "NAN", "-", "NaN"])
-
+    
     # Fill nan with mean of closest neighbors
     X = df.drop(target_col, axis=1)
     
@@ -119,7 +122,8 @@ def get_data(dir_name, columns, target_col, target_mapping):
     ))
 
     imputer = KNNImputer(n_neighbors=10)
-    df.loc[:, X.columns] = imputer.fit_transform(X)
+    imputed_data = imputer.fit_transform(X)
+    df.loc[:, X.columns] = imputed_data
 
     # Replace target mapping
     df[target_col] = df[target_col].replace(target_mapping)
