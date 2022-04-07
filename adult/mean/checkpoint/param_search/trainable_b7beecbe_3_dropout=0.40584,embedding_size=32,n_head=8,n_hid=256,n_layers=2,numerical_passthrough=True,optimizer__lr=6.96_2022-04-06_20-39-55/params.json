@@ -1,0 +1,9 @@
+{
+  "dropout": 0.40584093022169954,
+  "embedding_size": 32,
+  "n_head": 8,
+  "n_hid": 256,
+  "n_layers": 2,
+  "numerical_passthrough": true,
+  "optimizer__lr": 6.963067080140576e-05
+}
