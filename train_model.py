@@ -78,9 +78,9 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
 
     model_params = {
         **config,
-        "encoders": transformer_config.get_encoders(embedding_size, **encoders_params),
-        "aggregator": transformer_config.get_aggregator(embedding_size, **aggregator_params),
-        "preprocessor": transformer_config.get_preprocessor(**preprocessor_params),
+        "encoders": transformer_config.get_encoders(embedding_size, **{**config, **encoders_params}),
+        "aggregator": transformer_config.get_aggregator(embedding_size, **{**config, **aggregator_params}),
+        "preprocessor": transformer_config.get_preprocessor(**{**config, **preprocessor_params}),
         "optimizer": torch.optim.SGD,
         "criterion": criterion,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
@@ -100,13 +100,13 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
         return
 
     
-    checkpoint = skorch.callbacks.Checkpoint(monitor="balanced_accuracy_best", dirname=os.path.join(CHECKPOINT_DIR, "best_model"))
+    checkpoint = skorch.callbacks.Checkpoint(monitor="balanced_accuracy_score_best", dirname=os.path.join(CHECKPOINT_DIR, "best_model"))
 
     model = nn_utils.build_transformer_model(
                 train_indices,
                 val_indices,                
                 nn_utils.get_default_train_callbacks(seed=SEED, multiclass=multiclass) + [
-                    ("early_stopping", skorch.callbacks.EarlyStopping(monitor="balanced_accuracy", patience=EARLY_STOPPING, lower_is_better=False)),
+                    ("early_stopping", skorch.callbacks.EarlyStopping(monitor="balanced_accuracy_score", patience=EARLY_STOPPING, lower_is_better=False)),
                     ("checkpoint", checkpoint),
                     ("load_init_state", skorch.callbacks.LoadInitState(checkpoint)),
                     ("tensorboard", skorch.callbacks.TensorBoard(tensorboard.writer.SummaryWriter(
@@ -114,7 +114,7 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
                         filename_suffix="best_model"
                     ), key_mapper=key_mapper_fn
                     )),
-                    ("lr_scheduler", skorch.callbacks.LRScheduler(policy="ReduceLROnPlateau", monitor="balanced_accuracy", patience=EARLY_STOPPING // 3))
+                    ("lr_scheduler", skorch.callbacks.LRScheduler(policy="ReduceLROnPlateau", monitor="balanced_accuracy_score", patience=EARLY_STOPPING // 3))
                 ],
                 **model_params
                 )
