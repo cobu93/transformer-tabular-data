@@ -114,7 +114,7 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
                         filename_suffix="best_model"
                     ), key_mapper=key_mapper_fn
                     )),
-                    ("lr_scheduler", skorch.callbacks.LRScheduler(policy="ReduceLROnPlateau", monitor="balanced_accuracy_score", patience=EARLY_STOPPING // 3))
+                    ("lr_scheduler", skorch.callbacks.LRScheduler(policy="ReduceLROnPlateau", monitor="balanced_accuracy_score", event_name="event_lr", patience=EARLY_STOPPING // 3, mode="max"))
                 ],
                 **model_params
                 )
