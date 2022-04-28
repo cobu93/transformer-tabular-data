@@ -8,6 +8,8 @@ from ray.tune.suggest.optuna import OptunaSearch
 import torch
 
 from ray.tune.schedulers import AsyncHyperBandScheduler
+from ray.tune import ExperimentAnalysis
+from ray.tune import register_trainable
 
 import inspect
 import argparse
@@ -190,12 +192,9 @@ else:
 #####################################################
 # Hyperparameter search
 #####################################################
-analysis = tune.run(
-    trainable,
-    resume="AUTO",
-    local_dir=CHECKPOINT_DIR, 
-    name="param_search"    
-)
+
+register_trainable("trainable", trainable)
+analysis = ExperimentAnalysis(os.path.join(CHECKPOINT_DIR, "param_search"))
 
 best_config = analysis.get_best_config(metric="balanced_accuracy", mode="max")
 del analysis
