@@ -24,12 +24,11 @@ class LdpaTransformerConfig(TransformerConfig):
             ]
     
     def get_aggregator(self, embedding_size, *args, **kwargs) -> BaseAggregator:
-        return None
+        return SumAggregator(embedding_size)
 
     
     def get_preprocessor(self, *args, **kwargs) -> BasePreprocessor:
         return IdentityPreprocessor()
-
 
 class LdpaSearchSpaceConfig(SearchSpaceConfig):
     def get_search_space(self):
@@ -42,8 +41,6 @@ class LdpaSearchSpaceConfig(SearchSpaceConfig):
             "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024]),
             "numerical_passthrough": tune.choice([False, True])
         }
-
-
 
 class LdpaDatasetConfig(DatasetConfig):
 

@@ -39,7 +39,8 @@ class LdpaSearchSpaceConfig(SearchSpaceConfig):
             "n_head": tune.choice([1, 2, 4, 8, 16, 32]), # Number of heads per layer
             "n_hid": tune.choice([32, 64, 128, 256, 512, 1024]), # Size of the MLP inside each transformer encoder layer
             "dropout": tune.uniform(0, 0.5), # Used dropout
-            "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024])
+            "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024]),
+            "numerical_passthrough": tune.choice([False, True])
         }
 
 class LdpaDatasetConfig(DatasetConfig):
@@ -61,7 +62,7 @@ class LdpaDatasetConfig(DatasetConfig):
 
     def download(self):
         download_data(
-                "ldpa",
+                1483,
                 self.dir_name 
                 )
 
@@ -69,7 +70,7 @@ class LdpaDatasetConfig(DatasetConfig):
         self.columns, self.numerical_cols, self.categorical_cols, self.target_col, self.target_mapping = get_data_info(self.dir_name)
         X, y = get_data(self.dir_name, self.columns, self.target_col, self.target_mapping)
 
-        y = y.astype(int)
+        y = y.astype(float)
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, 

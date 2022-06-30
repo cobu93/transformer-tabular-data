@@ -29,7 +29,9 @@ class LdpaTransformerConfig(TransformerConfig):
             "input_size": embedding_size, 
             "output_size": hidden_size,
             "hidden_size": hidden_size,
-            **kwargs
+            "cell": kwargs["cell"],
+            "num_layers": kwargs["num_layers"],
+            "dropout": kwargs["dropout"]
         }
 
         return RNNAggregator(
@@ -50,6 +52,7 @@ class LdpaSearchSpaceConfig(SearchSpaceConfig):
             "n_hid": tune.choice([32, 64, 128, 256, 512, 1024]), # Size of the MLP inside each transformer encoder layer
             "dropout": tune.uniform(0, 0.5), # Used dropout
             "embedding_size": tune.choice([32, 64, 128, 256, 512, 1024]),
+            "numerical_passthrough": tune.choice([False, True]),
 
             # Exclusive RNN param search
             "aggregator__cell": tune.choice(["LSTM", "GRU"]),
@@ -77,7 +80,7 @@ class LdpaDatasetConfig(DatasetConfig):
 
     def download(self):
         download_data(
-                "ldpa",
+                1483,
                 self.dir_name 
                 )
 
@@ -85,7 +88,7 @@ class LdpaDatasetConfig(DatasetConfig):
         self.columns, self.numerical_cols, self.categorical_cols, self.target_col, self.target_mapping = get_data_info(self.dir_name)
         X, y = get_data(self.dir_name, self.columns, self.target_col, self.target_mapping)
 
-        y = y.astype(int)
+        y = y.astype(float)
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, 
