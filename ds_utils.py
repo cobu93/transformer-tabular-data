@@ -15,10 +15,10 @@ def get_default_config(columns, target, numerical_cols, df):
     for column in columns:
         if column != target:
             if column in numerical_cols:
-                recommended.append("ndsl.module.encoder.NumericalEncoder(embedding_size)")
+                recommended.append("NumericalEncoder(embedding_size)")
             else:
                 n_column_labels = len(df[column].value_counts())
-                recommended.append("ndsl.module.encoder.CategoricalOneHotEncoder(embedding_size, {})".format(n_column_labels))
+                recommended.append("CategoricalOneHotEncoder(embedding_size, {})".format(n_column_labels))
         
     return recommended
 
