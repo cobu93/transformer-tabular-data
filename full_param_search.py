@@ -5,8 +5,15 @@ import tensorboard
 import os
 import signal
 
-datasets = ["nomao"]#["sylvine", "anneal", "adult", "jasmine", "nomao"]
-aggregators = ["max"]#["cls", "concatenate", "rnn", "sum", "mean", "max"]
+datasets = [
+    # "jasmine", Much memory
+    "ldpa", 
+    "australian", 
+    "kr_vs_kp", 
+    "volkert"
+] 
+# datasets = ["sylvine", "anneal", "adult", "jasmine", "nomao", "ldpa", "australian", "kr_vs_kp", "volkert"] 
+aggregators = ["cls", "concatenate", "max", "mean", "rnn", "sum"]
 
 def tensorboard_run(logdir):
     tb = tensorboard.program.TensorBoard()
@@ -58,8 +65,17 @@ for dataset in datasets:
         
             train_best_process.start()
             train_best_process.join()
-        
+
         os.kill(tensorboard_process.pid, signal.SIGINT)   
+
+        clean_param_search_process = multiprocessing.Process(
+            target=subprocess.check_call,
+            args=([f"python clean_files.py {dataset} {aggregator}"],),
+            kwargs={"shell": True}
+        )
+
+        clean_param_search_process.start()
+        clean_param_search_process.join()
 
 
 print("The exit codes were:")
