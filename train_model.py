@@ -44,7 +44,8 @@ N_SAMPLES = 30
 
 BATCH_SIZE = 128
 MAX_EPOCHS = 1000
-EARLY_STOPPING = 30
+EARLY_STOPPING = 130
+LR_SCHEDULER_PATIENCE = 100
 MAX_CHECKPOINTS = 10
 multiclass = False
 
@@ -116,7 +117,7 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
                         filename_suffix="best_model"
                     ), key_mapper=key_mapper_fn
                     )),
-                    ("lr_scheduler", skorch.callbacks.LRScheduler(policy="ReduceLROnPlateau", monitor="balanced_accuracy_score", event_name="event_lr", patience=EARLY_STOPPING // 3, mode="max"))
+                    ("lr_scheduler", skorch.callbacks.LRScheduler(policy="ReduceLROnPlateau", monitor="balanced_accuracy_score", event_name="event_lr", patience=LR_SCHEDULER_PATIENCE, mode="max"))
                 ],
                 **model_params
                 )
