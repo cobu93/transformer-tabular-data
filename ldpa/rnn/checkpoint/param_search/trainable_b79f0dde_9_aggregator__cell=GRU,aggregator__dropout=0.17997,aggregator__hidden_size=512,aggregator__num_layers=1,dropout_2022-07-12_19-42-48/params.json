@@ -1,0 +1,13 @@
+{
+  "aggregator__cell": "GRU",
+  "aggregator__dropout": 0.17997355866861225,
+  "aggregator__hidden_size": 512,
+  "aggregator__num_layers": 1,
+  "dropout": 0.09226924820298454,
+  "embedding_size": 32,
+  "n_head": 8,
+  "n_hid": 1024,
+  "n_layers": 1,
+  "numerical_passthrough": false,
+  "optimizer__lr": 0.003953738050101275
+}
