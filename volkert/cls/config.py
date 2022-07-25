@@ -243,7 +243,7 @@ class VolkertDatasetConfig(DatasetConfig):
         self.columns, self.numerical_cols, self.categorical_cols, self.target_col, self.target_mapping = get_data_info(self.dir_name)
         X, y = get_data(self.dir_name, self.columns, self.target_col, self.target_mapping)
 
-        y = y.astype(float)
+        y = y.astype(int)
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, 
