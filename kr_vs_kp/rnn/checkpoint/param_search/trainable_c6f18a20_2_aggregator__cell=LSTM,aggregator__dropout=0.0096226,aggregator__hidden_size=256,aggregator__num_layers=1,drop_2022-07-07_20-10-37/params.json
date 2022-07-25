@@ -1,0 +1,13 @@
+{
+  "aggregator__cell": "LSTM",
+  "aggregator__dropout": 0.009622569737772313,
+  "aggregator__hidden_size": 256,
+  "aggregator__num_layers": 1,
+  "dropout": 0.01138952969026824,
+  "embedding_size": 512,
+  "n_head": 1,
+  "n_hid": 512,
+  "n_layers": 4,
+  "numerical_passthrough": true,
+  "optimizer__lr": 2.7212652121248213e-05
+}
