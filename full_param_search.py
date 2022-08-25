@@ -6,14 +6,12 @@ import os
 import signal
 
 datasets = [
-    # "jasmine", Much memory
-    "ldpa", 
-    "australian", 
-    "kr_vs_kp", 
     "volkert"
 ] 
 # datasets = ["sylvine", "anneal", "adult", "jasmine", "nomao", "ldpa", "australian", "kr_vs_kp", "volkert"] 
 aggregators = ["cls", "concatenate", "max", "mean", "rnn", "sum"]
+
+
 
 def tensorboard_run(logdir):
     tb = tensorboard.program.TensorBoard()
