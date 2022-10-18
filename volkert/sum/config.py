@@ -197,6 +197,8 @@ class VolkertTransformerConfig(TransformerConfig):
             ]
     
     def get_aggregator(self, embedding_size, *args, **kwargs) -> BaseAggregator:
+        if kwargs["numerical_passthrough"]:
+            return SumAggregator(0)
         return SumAggregator(embedding_size)
 
     
