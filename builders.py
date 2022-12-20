@@ -7,13 +7,20 @@ class TransformerConfig():
     def __init__(self):
         pass
 
-    def get_encoders(self, *args, **kwargs) -> List[FeatureEncoder]:
+    def get_decoder_hidden_units(self):
         raise NotImplementedError("This feature hasn't been implemented yet")
 
+    def get_decoder_activation_fn(self):
+        raise NotImplementedError("This feature hasn't been implemented yet")
+
+    def get_n_categories(self):
+        raise NotImplementedError("This feature hasn't been implemented yet")
+
+    def get_n_numerical(self):
+        raise NotImplementedError("This feature hasn't been implemented yet")
     
     def get_aggregator(self, *args, **kwargs) -> BaseAggregator:
         raise NotImplementedError("This feature hasn't been implemented yet")
-
     
     def get_preprocessor(self, *args, **kwargs) -> BasePreprocessor:
         raise NotImplementedError("This feature hasn't been implemented yet")

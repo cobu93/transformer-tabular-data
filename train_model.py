@@ -6,6 +6,7 @@ from ray import tune
 import optuna
 from ray.tune.suggest.optuna import OptunaSearch
 import torch
+import numpy as np
 
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune import ExperimentAnalysis
@@ -75,22 +76,27 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
     
     embedding_size = config.pop("embedding_size")
 
-    encoders_params = get_params_startswith(config, "encoders__")
     aggregator_params = get_params_startswith(config, "aggregator__")
     preprocessor_params = get_params_startswith(config, "preprocessor__")
 
+    limit_categories = len( transformer_config.get_n_categories())
+
     model_params = {
         **config,
-        "encoders": transformer_config.get_encoders(embedding_size, **{**config, **encoders_params}),
+        "n_categories": transformer_config.get_n_categories(),
+        "n_numerical": transformer_config.get_n_numerical(),
+        "embed_dim": embedding_size,
         "aggregator": transformer_config.get_aggregator(embedding_size, **{**config, **aggregator_params}),
-        "preprocessor": transformer_config.get_preprocessor(**{**config, **preprocessor_params}),
-        "optimizer": torch.optim.SGD,
+        "categorical_preprocessor": transformer_config.get_preprocessor(**{**config, **preprocessor_params}),
+        "optimizer": torch.optim.AdamW,
         "criterion": criterion,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
         "batch_size": BATCH_SIZE,
         "max_epochs": MAX_EPOCHS,
         "n_output": n_labels, # The number of output neurons
         "need_weights": False,
+        "decoder_hidden_units": transformer_config.get_decoder_hidden_units(),
+        "decoder_activation_fn": transformer_config.get_decoder_activation_fn(),
         "verbose": 1
         
     }
@@ -122,7 +128,11 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
                 **model_params
                 )
         
-    model = model.fit(X=all_features, y=all_labels)
+    model = model.fit(X={
+        "x_categorical": all_features[:, :limit_categories].astype(np.int32), 
+        "x_numerical": all_features[:, limit_categories:].astype(np.float32)
+        }, 
+        y=all_labels)
 
     with open(os.path.join(CHECKPOINT_DIR, "best_model/.fitted"), "w") as f:
         f.write("Fitted before")

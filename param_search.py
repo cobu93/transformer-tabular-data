@@ -12,6 +12,8 @@ from ray.tune.schedulers import AsyncHyperBandScheduler
 import inspect
 import argparse
 
+import numpy as np
+
 
 #####################################################
 # Configuration
@@ -69,23 +71,28 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
     
     embedding_size = config.pop("embedding_size")
 
-    encoders_params = get_params_startswith(config, "encoders__")
     aggregator_params = get_params_startswith(config, "aggregator__")
     preprocessor_params = get_params_startswith(config, "preprocessor__")
 
+    limit_categories = all_features.shape[1] - transformer_config.get_n_numerical() * 3
+
     model_params = {
         **config,
-        "encoders": transformer_config.get_encoders(embedding_size, **{**config, **encoders_params}),
+        "n_categories": transformer_config.get_n_categories(),
+        "n_numerical": transformer_config.get_n_numerical() * 3,
+        "embed_dim": embedding_size,
         "aggregator": transformer_config.get_aggregator(embedding_size, **{**config, **aggregator_params}),
-        "preprocessor": transformer_config.get_preprocessor(**{**config, **preprocessor_params}),
-        "optimizer": torch.optim.SGD,
+        "categorical_preprocessor": transformer_config.get_preprocessor(**{**config, **preprocessor_params}),
+        "optimizer": torch.optim.AdamW,
         "criterion": criterion,
         "device": "cuda" if torch.cuda.is_available() else "cpu",
         "batch_size": BATCH_SIZE,
         "max_epochs": MAX_EPOCHS,
         "n_output": n_labels, # The number of output neurons
         "need_weights": False,
-        "verbose": 0
+        "decoder_hidden_units": transformer_config.get_decoder_hidden_units(),
+        "decoder_activation_fn": transformer_config.get_decoder_activation_fn(),
+        "verbose": 1
         
     }
     
@@ -95,8 +102,16 @@ def trainable(config, checkpoint_dir=CHECKPOINT_DIR):
                 nn_utils.get_default_callbacks(seed=SEED, multiclass=multiclass),
                 **model_params
                 )
+
+    print("*" * 50)
+    print(all_features.shape, limit_categories)
+    print("*" * 50)
     
-    model = model.fit(X=all_features, y=all_labels)
+    model = model.fit(X={
+        "x_categorical": all_features[:, :limit_categories].astype(np.int32), 
+        "x_numerical": all_features[:, limit_categories:].astype(np.float32)
+        }, 
+        y=all_labels)
 
 #####################################################
 # Dataset and components
@@ -146,7 +161,16 @@ test_features, test_labels = dataset.get_test_data()
 
 preprocessor = preprocessor.fit(train_features, train_labels)
 
+print("-" * 50)
+print(train_features.shape)
+print("-" * 50)
+
 train_features = preprocessor.transform(train_features)
+
+print("+" * 50)
+print(train_features.shape)
+print("+" * 50)
+
 val_features = preprocessor.transform(val_features)
 test_features = preprocessor.transform(test_features)
 
@@ -181,6 +205,7 @@ for try_cnt, resume_mode in enumerate(resume_modes):
                 mode="max",
                 sampler=optuna.samplers.TPESampler()
             ),
+            stop={"training_iteration": 50},
             num_samples=N_SAMPLES,
             fail_fast=True,
             checkpoint_score_attr="max-balanced_accuracy",

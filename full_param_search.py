@@ -6,11 +6,11 @@ import os
 import signal
 
 datasets = [
-    "volkert"
+    "adult"
 ] 
 # datasets = ["sylvine", "anneal", "adult", "jasmine", "nomao", "ldpa", "australian", "kr_vs_kp", "volkert"] 
 #aggregators = ["cls", "concatenate", "max", "mean", "rnn", "sum"]
-aggregators = ["max", "mean", "rnn", "sum"]
+aggregators = ["concatenate"]
 
 
 

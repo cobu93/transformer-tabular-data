@@ -108,7 +108,7 @@ def get_data_info(dir_name):
 
     return columns, numerical_cols, categorical_cols, target_col, target_mapping
 
-def get_data(dir_name, columns, target_col, target_mapping):
+def get_data_2(dir_name, columns, target_col, target_mapping):
         
     # Open data
     df = pd.read_csv(os.path.join(dir_name, "dataset.csv"), header=0, names=columns, na_values=["?", "NA", "N/A", "nan", "NAN", "-", "NaN"])
@@ -124,6 +124,26 @@ def get_data(dir_name, columns, target_col, target_mapping):
     imputer = KNNImputer(n_neighbors=10)
     imputed_data = imputer.fit_transform(X)
     df.loc[:, X.columns] = imputed_data
+
+    # Replace target mapping
+    df[target_col] = df[target_col].replace(target_mapping)
+
+    return df.drop(target_col, axis=1), df[target_col]
+
+def get_data(dir_name, columns, target_col, target_mapping):
+        
+    # Open data
+    df = pd.read_csv(os.path.join(dir_name, "dataset.csv"), header=0, names=columns, na_values=["?", "NA", "N/A", "nan", "NAN", "-", "NaN"])
+    
+    num_cols = df._get_numeric_data().columns
+    for n_col in num_cols:
+        df[n_col] = df[n_col].fillna(-1)
+
+    for c_col in list(set(columns) - set(num_cols)):
+        df[c_col] = df[c_col].fillna("NaN")
+
+    # Fill nan with mean of closest neighbors
+    X = df.drop(target_col, axis=1)
 
     # Replace target mapping
     df[target_col] = df[target_col].replace(target_mapping)

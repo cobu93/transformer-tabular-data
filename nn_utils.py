@@ -23,31 +23,41 @@ def build_transformer_model(
     train_indices,
     validation_indices,
     callbacks,
+    n_categories, # List of number of categories
+    n_numerical, # Number of numerical features
     n_head, # Number of heads per layer
     n_hid, # Size of the MLP inside each transformer encoder layer
     n_layers, # Number of transformer encoder layers    
     n_output, # The number of output neurons
-    encoders, # List of features encoders
+    embed_dim,
     dropout=0.1, # Used dropout
     aggregator=None, # The aggregator for output vectors before decoder
-    preprocessor=None,
+    categorical_preprocessor=None,
+    numerical_preprocessor=None,
     need_weights=False,
     numerical_passthrough=False,
+    decoder_hidden_units=None,
+    decoder_activation_fn=None,
     **kwargs
     ):
 
     # Define model
     module = TabularTransformer(
+        n_categories,
+        n_numerical,
         n_head, # Number of heads per layer
         n_hid, # Size of the MLP inside each transformer encoder layer
         n_layers, # Number of transformer encoder layers    
         n_output, # The number of output neurons
-        torch.nn.ModuleList(encoders), # List of features encoders
+        embed_dim=embed_dim,
         dropout=dropout, # Used dropout
         aggregator=aggregator, # The aggregator for output vectors before decoder
-        preprocessor=preprocessor,
+        categorical_preprocessor=categorical_preprocessor,
+        numerical_preprocessor=numerical_preprocessor,
         need_weights=need_weights,
-        numerical_passthrough=numerical_passthrough
+        numerical_passthrough=numerical_passthrough,
+        decoder_hidden_units=decoder_hidden_units,
+        decoder_activation_fn=decoder_activation_fn,
     )
 
     model = skorch.NeuralNetClassifier(
@@ -132,11 +142,22 @@ def get_default_preprocessing_pipeline(categorical_cols, numerical_cols):
         ('scaler', preprocessing.StandardScaler())
     ])
 
+    numerical_transformer = pipeline.FeatureUnion([
+        ('qtscaler', preprocessing.QuantileTransformer()),
+        ('sscaler', preprocessing.StandardScaler()),
+        ('logscaler', preprocessing.FunctionTransformer(np.log1p)),
+    ])
+
+    numerical_categorical_transformer = pipeline.Pipeline(steps=[
+        ('dscaler', preprocessing.KBinsDiscretizer(encode="ordinal", strategy="uniform")), 
+    ])
+
     preprocessing_pipe = pipeline.Pipeline([
         ('columns_transformer', compose.ColumnTransformer(
             remainder='passthrough', #passthough features not listed
             transformers=[
                 ('categorical_transformer', categorical_transformer , categorical_cols),
+                ('numerical_categorical_transformer', numerical_categorical_transformer , numerical_cols),
                 ('numerical_transformer', numerical_transformer , numerical_cols)
             ]),
         ),

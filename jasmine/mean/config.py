@@ -202,7 +202,7 @@ class JasmineDatasetConfig(DatasetConfig):
                 self.dir_name 
                 )
 
-    def load(self, train_size=0.8, val_size=0.1, test_size=0.1, seed=11):
+    def load(self, train_size=0.65, val_size=0.15, test_size=0.20, seed=11):
         self.columns, self.numerical_cols, self.categorical_cols, self.target_col, self.target_mapping = get_data_info(self.dir_name)
         X, y = get_data(self.dir_name, self.columns, self.target_col, self.target_mapping)
 

@@ -12,23 +12,17 @@ class AdultTransformerConfig(TransformerConfig):
     def __init__(self):
         pass
 
-    def get_encoders(self, embedding_size, *args, **kwargs) -> List[FeatureEncoder]:
-        return [
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 8),
-            NumericalEncoder(embedding_size),
-            CategoricalOneHotEncoder(embedding_size, 16),
-            NumericalEncoder(embedding_size),
-            CategoricalOneHotEncoder(embedding_size, 7),
-            CategoricalOneHotEncoder(embedding_size, 14),
-            CategoricalOneHotEncoder(embedding_size, 6),
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 2),
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 41)
-            ]
+    def get_decoder_hidden_units(self):
+        return [128, 64]
+
+    def get_decoder_activation_fn(self):
+        return nn.ReLU()
+
+    def get_n_categories(self):
+        return (8, 16, 7, 14, 6, 5, 2, 41)
+
+    def get_n_numerical(self):
+        return 6
     
     def get_aggregator(self, embedding_size, *args, **kwargs) -> BaseAggregator:
         return MaxAggregator(embedding_size)
@@ -72,7 +66,7 @@ class AdultDatasetConfig(DatasetConfig):
                 self.dir_name 
                 )
 
-    def load(self, train_size=0.8, val_size=0.1, test_size=0.1, seed=11):
+    def load(self, train_size=0.65, val_size=0.15, test_size=0.20, seed=11):
         self.columns, self.numerical_cols, self.categorical_cols, self.target_col, self.target_mapping = get_data_info(self.dir_name)
         X, y = get_data(self.dir_name, self.columns, self.target_col, self.target_mapping)
 

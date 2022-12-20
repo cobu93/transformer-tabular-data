@@ -12,23 +12,18 @@ class AdultTransformerConfig(TransformerConfig):
     def __init__(self):
         pass
 
-    def get_encoders(self, embedding_size, *args, **kwargs) -> List[FeatureEncoder]:
-        return [
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 8),
-            NumericalEncoder(embedding_size),
-            CategoricalOneHotEncoder(embedding_size, 16),
-            NumericalEncoder(embedding_size),
-            CategoricalOneHotEncoder(embedding_size, 7),
-            CategoricalOneHotEncoder(embedding_size, 14),
-            CategoricalOneHotEncoder(embedding_size, 6),
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 2),
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 5),
-            CategoricalOneHotEncoder(embedding_size, 41)
-            ]
+    def get_decoder_hidden_units(self):
+        return [128, 64]
+
+    def get_decoder_activation_fn(self):
+        return nn.ReLU()
+
+    def get_n_categories(self):
+        return (8, 16, 7, 14, 6, 5, 2, 41, 5, 5, 5, 5, 5, 5)
+        return (8, 16, 7, 14, 6, 5, 2, 41)
+
+    def get_n_numerical(self):
+        return 6
     
     def get_aggregator(self, embedding_size, *args, **kwargs) -> BaseAggregator:
         return None
@@ -41,8 +36,19 @@ class AdultTransformerConfig(TransformerConfig):
 class AdultSearchSpaceConfig(SearchSpaceConfig):
     def get_search_space(self):
         return {
+            "n_layers": tune.choice([6]), # Number of transformer encoder layers    
+            "optimizer__lr": tune.choice([10e-6, 10e-5, 10e-4, 10e-3]),    
+            "optimizer__weight_decay": tune.choice([10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1]),
+            "n_head": tune.choice([8]), # Number of heads per layer
+            "n_hid": tune.choice([16]), # Size of the MLP inside each transformer encoder layer
+            "dropout": tune.choice([0, 0.1, 0.2, 0.3, 0.4, 0.5]), # Used dropout
+            "embedding_size": tune.choice([32]),
+            "numerical_passthrough": tune.choice([True])
+            }
+
+        return {
             "n_layers": tune.randint(1, 5), # Number of transformer encoder layers    
-            "optimizer__lr": tune.loguniform(1e-5, 1e-1),
+            "optimizer__lr": tune.loguniform(1e-5, 1e-1),    
             "n_head": tune.choice([1, 2, 4, 8, 16, 32]), # Number of heads per layer
             "n_hid": tune.choice([32, 64, 128, 256, 512, 1024]), # Size of the MLP inside each transformer encoder layer
             "dropout": tune.uniform(0, 0.5), # Used dropout
@@ -75,7 +81,7 @@ class AdultDatasetConfig(DatasetConfig):
                 self.dir_name 
                 )
 
-    def load(self, train_size=0.8, val_size=0.1, test_size=0.1, seed=11):
+    def load(self, train_size=0.65, val_size=0.15, test_size=0.20, seed=11):
         self.columns, self.numerical_cols, self.categorical_cols, self.target_col, self.target_mapping = get_data_info(self.dir_name)
         X, y = get_data(self.dir_name, self.columns, self.target_col, self.target_mapping)
 
