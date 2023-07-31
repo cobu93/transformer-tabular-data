@@ -1,2 +1,0 @@
-train_loss,valid_loss,balanced_accuracy,accuracy,roc_auc,f1,recall,time_this_iter_s,done,timesteps_total,episodes_total,training_iteration,trial_id,experiment_id,date,timestamp,time_total_s,pid,hostname,node_ip,time_since_restore,timesteps_since_restore,iterations_since_restore
-0.4498685666618987,0.359139725034189,0.733611171126096,0.8374616171954964,0.7336111711260959,0.6141885325558794,0.5310924369747899,9.456735372543335,False,,,1,5dd23636,f8eefd391bf5468f9ecddca4d581d447,2022-12-19_00-09-02,1671430142,9.456735372543335,38807,desktop,192.168.100.15,9.456735372543335,0,1
