@@ -1,1 +1,0 @@
-{"adult": {"concatenate": {"balanced_accuracy_train": 0.8022011983862758, "balanced_accuracy_val": 0.7963661976992864, "balanced_accuracy_test": 0.79289930085895, "n_parameters": 354433, "n_trainable": 354433}}}

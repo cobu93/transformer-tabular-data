@@ -1,1 +1,0 @@
-{"adult": {"concatenate": {"n_layers": 1, "optimizer__lr": 1.3473254295104352e-05, "n_head": 16, "n_hid": 128, "dropout": 0.014089422184433743, "numerical_passthrough": false}}}
