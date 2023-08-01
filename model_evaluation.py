@@ -1,12 +1,11 @@
 import utils
 import skorch
 
-from ray import tune
-import optuna
-from ray.tune.suggest.optuna import OptunaSearch
+from sklearn import metrics
 import torch
-
-from ray.tune.schedulers import AsyncHyperBandScheduler
+from ray.tune import ExperimentAnalysis
+from ray.tune import register_trainable
+import json
 
 import argparse
 
@@ -62,34 +61,6 @@ HYPERPARAM_OPT_METRIC = "valid_loss_opt"
 HYPERPARAM_OPT_MODE = "min"
 
 #####################################################
-# Define search space
-#####################################################
-
-if not os.path.exists(BASE_DIR):
-    os.makedirs(BASE_DIR)
-
-search_space = {
-    "n_layers": tune.randint(1, 5), # Number of transformer encoder layers    
-    "optimizer__lr": tune.loguniform(1e-5, 1e-3),    
-    "optimizer__weight_decay": tune.loguniform(1e-6, 1e-3),
-    "n_head": tune.choice([1, 2, 4, 8, 16, 32]), # Number of heads per layer
-    "n_hid": tune.choice([32, 64, 128, 256, 512, 1024]), # Size of the MLP inside each transformer encoder layer
-    "attn_dropout": tune.uniform(0, 0.5), # Used dropout   
-    "ff_dropout": tune.uniform(0, 0.5), # Used dropout   
-    "embed_dim": tune.choice([32, 64, 128, 256]),
-    "numerical_passthrough": tune.choice([False, True])
-}
-
-if aggregator == "rnn":
-    search_space = {
-        **search_space,
-        "aggregator__cell": tune.choice(["LSTM", "GRU"]),
-        "aggregator__hidden_size": tune.choice([32, 64, 128, 256, 512, 1024]),
-        "aggregator__num_layers": tune.randint(1, 3),
-        "aggregator__dropout": tune.uniform(0, 0.5)
-    }
-
-#####################################################
 # Load dataset
 #####################################################
 ds = utils.read_dataset(dataset)
@@ -102,10 +73,6 @@ if not multiclass:
 else:
     n_outputs = len(ds["labels"])
     criterion = torch.nn.CrossEntropyLoss
-
-# If there aren't categorical features always use the MHAM
-if ds["categorical"].shape[0] == 0 or ds["numerical"].shape[0] == 0:
-    search_space["numerical_passthrough"] = tune.choice([False])
 
 print(SEP)
 
@@ -164,27 +131,7 @@ print("Done")
 # Define trainable
 #####################################################
 
-all_features, all_outputs, (train_indices, val_indices) = utils.join_data(
-    (data["train"]["features"], data["val"]["features"]),
-    (data["train"]["outputs"], data["val"]["outputs"])
-) 
-
-if multiclass:
-    all_outputs = all_outputs.astype(np.int64)
-else:
-    all_outputs = all_outputs.astype(np.float32)
-
-def trainable(
-    config, 
-    features, 
-    outputs,
-    n_numerical,
-    optimizer=OPTIMIZER,
-    device=DEVICE,
-    batch_size=BATCH_SIZE,
-    max_epochs=MAX_EPOCHS,
-    checkpoint_metric=CHECKPOINT_METRIC
-    ):
+def trainable(config, checkpoint_dir="."):
 
     module = TabularTransformer(
         n_categories=ds["n_categorical"], # List of number of categories
@@ -209,69 +156,97 @@ def trainable(
         numerical_passthrough=config["numerical_passthrough"]
     )
 
+    checkpoint = skorch.callbacks.Checkpoint(
+        monitor=CHECKPOINT_METRIC, 
+        dirname=os.path.join(checkpoint_dir, "best_model")
+    )
+
     model = skorch.NeuralNetClassifier(
             module=module,
             criterion=criterion,
-            optimizer=optimizer,
-            device=device,
-            batch_size=batch_size,
-            max_epochs=max_epochs,
-            train_split=skorch.dataset.CVSplit(((train_indices, val_indices),)),
-            callbacks=utils.get_default_callbacks(multiclass=multiclass) + [
-                ("checkpoint", skorch.callbacks.Checkpoint(
-                    monitor=checkpoint_metric, 
-                    dirname="best_model", 
-                    ))
-            ],
-            optimizer__lr=config["optimizer__lr"],
-            optimizer__weight_decay=config["optimizer__weight_decay"]    
+            optimizer=OPTIMIZER,
+            device=DEVICE,
+            batch_size=BATCH_SIZE,
+            max_epochs=MAX_EPOCHS,
+            callbacks=[]
         )
 
-    model = model.fit(X={
-        "x_numerical": features[:, :n_numerical].astype(np.float32),
-        "x_categorical": features[:, n_numerical:].astype(np.int32)
-        }, 
-        y=outputs)
+    model.initialize()
+    model.load_params(checkpoint=checkpoint)
+
+    return model
 
 
 #####################################################
 # Hyperparameter search
 #####################################################
+register_trainable("trainable", trainable)
+
 print(SEP)
-print("Starting hyperparameter search...")
+print("Loading checkpoint")
 
-tune.with_parameters
+analysis = ExperimentAnalysis(os.path.join(CHECKPOINT_DIR, "param_search"))
+best_trial = analysis.get_best_trial(metric=HYPERPARAM_OPT_METRIC, mode=HYPERPARAM_OPT_MODE)
 
-analysis = tune.run(
-    tune.with_parameters(trainable, features=all_features, outputs=all_outputs, n_numerical=ds["n_numerical"]),
-    name="param_search",
-    stop={
-        "training_iteration": MAX_EPOCHS
-    },
-    config=search_space,
-    resources_per_trial={
-        "gpu": 1,
-        "cpu": 6
-    },
-    num_samples=N_SAMPLES,
-    local_dir=CHECKPOINT_DIR, 
-    search_alg=OptunaSearch(
-        metric=HYPERPARAM_OPT_METRIC,
-        mode=HYPERPARAM_OPT_MODE,
-        sampler=optuna.samplers.TPESampler(n_startup_trials=N_STARTUP_TRIALS)
-        ),
-    scheduler=AsyncHyperBandScheduler(
-        time_attr="training_iteration",
-        metric=HYPERPARAM_OPT_METRIC,
-        mode=HYPERPARAM_OPT_MODE,
-        grace_period=EARLY_STOPPING
-        ),
-    verbose=1,
-    progress_reporter=utils.FileReporter(REPORT_FILENAME),
-    log_to_file=True,
-    trial_dirname_creator=utils.trial_dirname_creator,
-    fail_fast=True,
-    resume="AUTO"
+model = trainable(
+    best_trial.config,
+    checkpoint_dir=os.path.join(CHECKPOINT_DIR, "param_search", best_trial.custom_dirname)
     )
 
-print("Best config: ", analysis.get_best_config(metric=HYPERPARAM_OPT_METRIC, mode=HYPERPARAM_OPT_MODE))
+evaluators = [
+    ("acc", metrics.accuracy_score, "outputs"),
+    ("balanced_acc", metrics.balanced_accuracy_score, "outputs")
+]
+
+if not multiclass:
+    evaluators += [
+        ("roc_auc", metrics.roc_auc_score, "probas"),
+        ("f1", metrics.f1_score, "outputs"),
+        ("precision", metrics.precision_score, "outputs"),
+        ("recall", metrics.recall_score, "outputs"),
+    ]
+    
+predictions = {}
+
+print(SEP)
+print("Computing predictions for:")
+
+for data_name in ["train", "val", "test"]:
+    print(f"...... {data_name}")
+    predictions[data_name] = {}
+
+    predictions[data_name]["probas"] = model.predict_proba(
+            X={
+                "x_numerical": data[data_name]["features"][:, :ds["n_numerical"]].astype(np.float32),
+                "x_categorical": data[data_name]["features"][:, ds["n_numerical"]:].astype(np.int32)
+                }
+            )
+            
+    if not multiclass:
+        predictions[data_name]["probas"] = predictions[data_name]["probas"][:, 1]
+        predictions[data_name]["outputs"] = np.rint(predictions[data_name]["probas"])
+    else:
+        predictions[data_name]["outputs"] = np.argmax(predictions[data_name]["probas"], axis=1)
+        
+prediction_metrics = {}
+
+print("Computing metrics for:")
+
+for data_name in ["train", "val", "test"]:
+    print(f"...... {data_name}")
+    prediction_metrics[data_name] = {}
+    for metric_name, scorer, input_type  in evaluators:
+        score = scorer(data[data_name]["outputs"], predictions[data_name][input_type])
+        prediction_metrics[data_name][metric_name]= np.round(score * 100, decimals=3)
+
+
+eval_file = os.path.join(BASE_DIR, "evaluation.json")
+print(SEP)
+print(f"Saving evaluation file at {eval_file}")
+
+with open(eval_file, "w") as f:
+    evaluation_info = {
+        "config": best_trial.config,
+        "metrics": prediction_metrics
+    }
+    json.dump(evaluation_info, f, indent=6)

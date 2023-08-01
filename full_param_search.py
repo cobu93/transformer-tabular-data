@@ -5,13 +5,13 @@ import tensorboard
 import os
 import signal
 
-datasets = [
-    "adult"
-] 
-# datasets = ["sylvine", "anneal", "adult", "jasmine", "nomao", "ldpa", "australian", "kr_vs_kp", "volkert"] 
-#aggregators = ["cls", "concatenate", "max", "mean", "rnn", "sum"]
-aggregators = ["concatenate"]
 
+# Hecho
+datasets = [
+    "sylvine", "anneal", "adult", "jasmine", "nomao", "ldpa", "australian", "kr-vs-kp", "volkert"
+    ]
+
+aggregators = ["cls", "concatenate", "max", "mean", "rnn", "sum"]
 
 
 def tensorboard_run(logdir):
@@ -35,15 +35,18 @@ for dataset in datasets:
     for aggregator in aggregators:
         print(f"Trying {dataset}.{aggregator}")
 
+        
         if not os.path.exists(f"{dataset}/{aggregator}/checkpoint"):
-            os.mkdir(f"{dataset}/{aggregator}/checkpoint")
-
+            os.makedirs(f"{dataset}/{aggregator}/checkpoint")
+        
+        # Hyperparameter search
         param_search_process = multiprocessing.Process(
             target=subprocess.check_call,
             args=([f"python param_search.py {dataset} {aggregator}"],),
             kwargs={"shell": True}
         )
 
+        # Tensorboard
         tensorboard_process = multiprocessing.Process(
             target=tensorboard_run,
             args=(f"{dataset}/{aggregator}/checkpoint",)
@@ -53,17 +56,6 @@ for dataset in datasets:
         tensorboard_process.start()
         param_search_process.join()
         exit_codes[f"{dataset}.{aggregator}"] = param_search_process.exitcode
-
-        
-        if param_search_process.exitcode == 0:
-            train_best_process = multiprocessing.Process(
-                target=subprocess.check_call,
-                args=([f"python train_model.py {dataset} {aggregator}"],),
-                kwargs={"shell": True}
-            )
-        
-            train_best_process.start()
-            train_best_process.join()
 
         os.kill(tensorboard_process.pid, signal.SIGINT)   
 
@@ -75,6 +67,24 @@ for dataset in datasets:
 
         clean_param_search_process.start()
         clean_param_search_process.join()
+        
+        evaluate_model_process = multiprocessing.Process(
+            target=subprocess.check_call,
+            args=([f"python model_evaluation.py {dataset} {aggregator}"],),
+            kwargs={"shell": True}
+        )
+
+        evaluate_model_process.start()
+        evaluate_model_process.join()
+        
+        evaluate_trials_process = multiprocessing.Process(
+            target=subprocess.check_call,
+            args=([f"python trials_evaluation.py {dataset} {aggregator}"],),
+            kwargs={"shell": True}
+        )
+
+        evaluate_trials_process.start()
+        evaluate_trials_process.join()
 
 
 print("The exit codes were:")
@@ -82,8 +92,4 @@ print("The exit codes were:")
 for key in exit_codes:
     print(key, "--->", exit_codes[key], f"[{'SUCCESS' if exit_codes[key] == 0 else 'FAILURE' }]")
 
-#subprocess.check_call(
-#    ["git add -A && git commit -m 'Automatic uploading after param search execution' && git pull && git push"],
-#    shell=True
-#)
         
