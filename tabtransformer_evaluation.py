@@ -2,19 +2,12 @@ import utils
 import skorch
 
 from ray import tune
-import optuna
-from ray.tune.suggest.optuna import OptunaSearch
 import torch
-
-from ray.tune.schedulers import AsyncHyperBandScheduler
 
 from ray.tune import ExperimentAnalysis
 from ray.tune import register_trainable
 
-import argparse
-
 import os
-
 import numpy as np
 
 from ndsl.architecture.attention import TabularTransformer

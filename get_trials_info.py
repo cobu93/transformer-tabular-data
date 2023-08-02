@@ -1,7 +1,6 @@
 import utils
 import skorch
 
-from sklearn import metrics
 import torch
 from ray.tune import ExperimentAnalysis
 from ray.tune import register_trainable
@@ -10,8 +9,6 @@ import json
 import pandas as pd
 
 import os
-
-import numpy as np
 
 from ndsl.architecture.attention import TabularTransformer
 import torch.nn as nn
