@@ -1,9 +1,15 @@
 tensorboard==2.6.0
 skorch==0.10.0 
-ndsl-attn-fs-archs==0.0.6
+ndsl-attn-fs-archs==0.0.7
 optuna==2.10.0
 ray[tune]==1.10.0
 openml==0.11.0
 lz4==4.0.0
 protobuf==3.19.0
+pandas==1.4.4
+torch==1.7.1
+torchtext==0.8.1
+jupyter==1.0.0
+matplotlib==3.7.1
+seaborn==0.12.2
 numpy>=1.20.3
