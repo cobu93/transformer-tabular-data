@@ -17,16 +17,16 @@ Below we explain how we used these files. If you don't require them all, continu
 
 Our recommendation is to install conda, create a new environment and activate it running:
 
-´´´
+~~~
 conda create -n tab-trans python==3.8.11
 conda activate tab-trans
-´´´
+~~~
 
 The requirements for executing any code are listed in the _requirements.txt_ file. If you are in the conda environment, you can install them by running:
 
-´´´
+~~~
 pip install -r requirements.txt
-´´´
+~~~
 
 ## Procedures
 
