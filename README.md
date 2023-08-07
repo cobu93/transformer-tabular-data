@@ -7,9 +7,9 @@ This repository contains the experiments introduced in the "Transformers for hig
 To get started, the initial step is to clone or download the repository. However, please note that some additional files need to be downloaded as well since they are pretty large. These files are crucial to avoid the tedious process of reproducing results, training models, and extracting information from the datasets.
 
 
-- [Replicating results files](https://drive.google.com/file/d/1rjkWtupyiFEue8rjYDB-s5EOikWbpv0t/view?usp=sharing) 
-- [Fitted models](https://drive.google.com/file/d/1rjkWtupyiFEue8rjYDB-s5EOikWbpv0t/view?usp=sharing)
-- [Cumulative attention vectors](https://drive.google.com/file/d/1rjkWtupyiFEue8rjYDB-s5EOikWbpv0t/view?usp=sharing)
+- [Replicating results files](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/EaJg3TK85n5HkaDydbPpq7UBa1VcqcrhWDlzMP4ZJwe6Ww?e=QD130r) 
+- [Hyperparameter search files](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/EWN7ic04YQ1OldxVpWLzTgkBC5RlMRum45-ARjrr1rjIGg?e=605v7A)
+- [Cumulative attention vectors](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/ESekCil3dUlBk2am7wisHuYBjquzxgNDLueaLJbsf7j-wg?e=PaBPPS)
 
 Below we explain how we used these files. If you don't require them all, continue reading and downloading those you need. You must extract the files in the repository's root path.
 
@@ -34,7 +34,7 @@ pip install -r requirements.txt
 
 To validate our implementation, we replicated the Tab and FT Transformers results. The replication of these results is included in files __tabtransformer_replicate.py__ and __fttransformer_replicate.py__. 
 
-To avoid retraining the models, we provide the [fitted models](https://drive.google.com/file/d/1rjkWtupyiFEue8rjYDB-s5EOikWbpv0t/view?usp=sharing). If you go through this option, download the files and decompress them in the root path. To evaluate the models and get the same results reported for those architectures, we provide the files __tabtransformer_evaluation.py__ and __fttransformer_evaluation.py__. 
+To avoid retraining the models, we provide the [fitted models](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/EaJg3TK85n5HkaDydbPpq7UBa1VcqcrhWDlzMP4ZJwe6Ww?e=QD130r). If you go through this option, download the files and decompress them in the root path. To evaluate the models and get the same results reported for those architectures, we provide the files __tabtransformer_evaluation.py__ and __fttransformer_evaluation.py__. 
 
 ### Dataset selection
 
@@ -48,9 +48,11 @@ The hyperparameter search is in the script __param_search.py__. It includes the 
 
 To compile the information of all trials, we include the script __get_trials_info.py__, which generates a CSV file named _trials\_info.csv_.
 
+To avoid the repetition of this process, we provide the [hyperparameter search files](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/EWN7ic04YQ1OldxVpWLzTgkBC5RlMRum45-ARjrr1rjIGg?e=605v7A), including the fitted models and the Optuna files.
+
 ### Cumulative attention
 
-To extract the cumulative attention vectors for each dataset's best result, we provide the script __attention_extraciton.py__. It generates a folder named attention. Inside the folder, there exists a folder for each dataset. Inside each dataset folder are the cumulative vectors for train, validation, and test, which were written using numpy. The last column of the array is the label assigned to each cumulative vector.
+To extract the cumulative attention vectors for each dataset's best result, we provide the script __attention_extraciton.py__. It generates a folder named attention. Inside the folder, there exists a folder for each dataset. Inside each dataset folder are the cumulative vectors for train, validation, and test, which were written using numpy. The last column of the array is the label assigned to each cumulative vector. To avoid the extractionprocess we provide the [cumulative attention vectors](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/ESekCil3dUlBk2am7wisHuYBjquzxgNDLueaLJbsf7j-wg?e=PaBPPS) generated.
 
 ## Results
 
