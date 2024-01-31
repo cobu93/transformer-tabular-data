@@ -10,7 +10,7 @@ def get_preprocessor(
         n_neighbors=10
     ):
 
-    categories = [categories[k] for k in categories]
+    categories = [categories[k] for k in categorical_columns]
     n_categorical = len(categorical_columns)
     n_numerical = len(numerical_columns)
     n_total = n_categorical + n_numerical

@@ -111,16 +111,16 @@ for ds in df_selected.iloc:
     # Replicating for training data
 
     splitter = model_selection.StratifiedKFold(n_splits=K_FOLD, shuffle=True, random_state=SEED)
-    k_splits = []
+    k_splits = {}
     for i, (train_indices, val_indices) in enumerate(splitter.split(X_train, y_train)):
 
         assert np.max(train_indices) < X_train.shape[0], "Indices are not correct"
         assert np.max(val_indices) < X_train.shape[0], "Indices are not correct"
 
-        k_splits.append({ f"fold_{i}" :{
+        k_splits[f"fold_{i}"] = {
             "train": train_indices.tolist(),
             "val": val_indices.tolist(),
-        }})
+        }
     
     
     train_meta = {
