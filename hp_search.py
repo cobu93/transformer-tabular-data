@@ -120,6 +120,7 @@ def train(
     
     logger.info("Preprocessing data")
     preprocessor = preprocessor.fit(features.iloc[train_indices])
+    
     X = preprocessor.transform(features)
     y = labels.values
 
@@ -152,7 +153,13 @@ def train(
         y=y
     )
 
-    return model.score(X, y)
+    return model.score(
+        X={
+            "x_numerical": X[:, :n_numerical].astype(np.float32),
+            "x_categorical": X[:, n_numerical:].astype(np.int32)
+            }, 
+            y=y
+        )
 
 
 
@@ -196,7 +203,7 @@ def cross_validate():
     metrics = []
     for split in splits:
         logger.info(f"Running split {split}")
-        # reset_wandb_env()
+        reset_wandb_env()
         result = train(
             dataset,
             aggregator,
@@ -210,7 +217,6 @@ def cross_validate():
         metrics.append(result)
 
     # resume the sweep run
-    #logger.info("Resuming run")
     sweep_run = wandb.init(id=sweep_run_id, resume="must")
     # log metric to sweep run
     sweep_run.log(dict(val_accuracy=sum(metrics) / len(metrics)))
