@@ -115,12 +115,12 @@ def build_default_model_from_configs(
 
     rnn_aggregator_parameters = None
 
-    if dataset_meta["aggregator"] == "rnn":
+    if config["aggregator"] == "rnn":
         rnn_aggregator_parameters = {
-            "cell": config.aggregator__cell,
-            "output_size": config.aggregator__hidden_size, 
-            "num_layers": config.aggregator__num_layers, 
-            "dropout": config.aggregator__dropout
+            "cell": config["aggregator__cell"],
+            "output_size": config["aggregator__hidden_size"], 
+            "num_layers": config["aggregator__num_layers"], 
+            "dropout": config["aggregator__dropout"]
         }
          
     multiclass = len(dataset_meta["labels"]) > 2
@@ -136,25 +136,25 @@ def build_default_model_from_configs(
     model = build_model(
         dataset_meta["n_categorical"], # List of number of categories
         dataset_meta["n_numerical"], # Number of numerical features
-        config.n_head, # Number of heads per layer
-        config.n_hid, # Size of the MLP inside each transformer encoder layer
-        config.n_layers, # Number of transformer encoder layers    
+        config["n_head"], # Number of heads per layer
+        config["n_hid"], # Size of the MLP inside each transformer encoder layer
+        config["n_layers"], # Number of transformer encoder layers    
         n_outputs, # The number of output neurons
-        config.embed_dim,
-        config.attn_dropout, 
-        config.ff_dropout, 
-        config.aggregator, # The aggregator for output vectors before decoder
+        config["embed_dim"],
+        config["attn_dropout"], 
+        config["ff_dropout"], 
+        config["aggregator"], # The aggregator for output vectors before decoder
         rnn_aggregator_parameters=rnn_aggregator_parameters,
         decoder_hidden_units=[128, 64],
         decoder_activation_fn=nn.ReLU(),
         need_weights=need_weights,
-        numerical_passthrough=config.numerical_passthrough,
+        numerical_passthrough=config["numerical_passthrough"],
         criterion=criterion,
         optimizer=optimizer,
         device=device,
         batch_size=batch_size,
         max_epochs=max_epochs,
-        train_split=skorch.dataset.CVSplit(((
+        train_split=skorch.dataset.ValidSplit(((
             dataset_meta["splits"][fold_name]["train"], 
             dataset_meta["splits"][fold_name]["val"]
         ),)),
@@ -164,8 +164,8 @@ def build_default_model_from_configs(
                 #    dirname="best_model", 
                 #    ))
             #],
-        learning_rate=config.optimizer__lr,
-        weight_decay=config.optimizer__weight_decay
+        learning_rate=config["optimizer__lr"],
+        weight_decay=config["optimizer__weight_decay"]
         )
 
     return model
