@@ -3,6 +3,20 @@ from sklearn import pipeline, preprocessing, impute, compose, base
 
 import numpy as np
 
+class OffsetTransformer(base.BaseEstimator, base.TransformerMixin):
+    def __init__(self, offset=1):
+        self.offset = offset
+    
+    def fit(self, x, y=None):
+        return self
+    
+    def transform(self, X):
+        return X + self.offset
+
+    def fit_transform(self, X, y=None):
+        self.fit(X, y)
+        return self.transform(X)
+
 def get_preprocessor(
         categorical_columns,
         numerical_columns,
@@ -11,34 +25,32 @@ def get_preprocessor(
     ):
 
     categories = [categories[k] for k in categorical_columns]
-    n_categorical = len(categorical_columns)
-    n_numerical = len(numerical_columns)
-    n_total = n_categorical + n_numerical
 
-    imputer = impute.KNNImputer(n_neighbors=n_neighbors)
+    imputer = impute.KNNImputer(n_neighbors=n_neighbors, keep_empty_features=True)
 
     categorical_transformer = preprocessing.OrdinalEncoder(
                     categories=categories,
                     handle_unknown="use_encoded_value", 
                     unknown_value=np.nan
                 )
+    
+    offset_transformer = OffsetTransformer()
 
     numerical_transformer = preprocessing.StandardScaler()
 
     preprocessor = pipeline.Pipeline([
-        ("categorical", compose.ColumnTransformer(
+        ("encodig_scaling", compose.ColumnTransformer(
             remainder="passthrough", #passthough features not listed
             transformers=[
-                ("categorical_transformer", categorical_transformer , categorical_columns)
+                ('numerical_transformer', numerical_transformer , numerical_columns),
+                ("categorical_transformer", pipeline.Pipeline([
+                    ("encoder", categorical_transformer), 
+                    ("offset", offset_transformer) # Added because KNN Imputer set empties to 0
+                ]) , categorical_columns),
+                
             ])
         ),
-        ("imputation", imputer),
-        ("numerical", compose.ColumnTransformer(
-            remainder="passthrough", #passthough features not listed
-            transformers=[
-                ('numerical_transformer', numerical_transformer , np.arange(n_categorical, n_total))
-            ]),
-        )
+        ("imputation", imputer)
     ])
 
     return preprocessor
