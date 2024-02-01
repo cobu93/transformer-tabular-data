@@ -6,7 +6,14 @@ K_FOLD = 5
 
 PROJECT_NAME = "tabular-transformer"
 ENTITY_NAME = "tt-ndsl"
-WORKER_JOBS = [{"dataset": "anneal", "aggregator": "rnn"}]
+WORKER_JOBS = [
+    {"dataset": "anneal", "aggregator": "cls"},
+    {"dataset": "anneal", "aggregator": "concatenate"},
+    {"dataset": "anneal", "aggregator": "max"},
+    {"dataset": "anneal", "aggregator": "mean"},
+    {"dataset": "anneal", "aggregator": "rnn"},
+    {"dataset": "anneal", "aggregator": "sum"},
+]
 N_TRIALS = 64
 
 DATASETS_FILE = "datasets.csv"
