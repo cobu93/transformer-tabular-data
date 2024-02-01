@@ -117,7 +117,7 @@ for ds in df_selected.iloc:
         assert np.max(train_indices) < X_train.shape[0], "Indices are not correct"
         assert np.max(val_indices) < X_train.shape[0], "Indices are not correct"
 
-        k_splits[f"fold_{i}"] = {
+        k_splits[f"F{i}"] = {
             "train": train_indices.tolist(),
             "val": val_indices.tolist(),
         }

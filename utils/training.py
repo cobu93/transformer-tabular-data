@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import skorch
 from ndsl.architecture.attention import TabularTransformer
+import os
 from utils import callback
 
 def build_module(
@@ -110,7 +112,10 @@ def build_default_model_from_configs(
         optimizer=torch.optim.AdamW,
         device="cuda" if torch.cuda.is_available() else "cpu",
         batch_size=32,
-        max_epochs=100
+        max_epochs=100,
+        monitor_metric="valid_loss",
+        early_stopping_fraction=0.1,
+        checkpoint_dir="."
     ):
 
     rnn_aggregator_parameters = None
@@ -132,12 +137,24 @@ def build_default_model_from_configs(
         n_outputs = len(dataset_meta["labels"])
         criterion = torch.nn.CrossEntropyLoss
     
+    
+    checkpoint = [(f"checkpoint_{monitor_metric}", skorch.callbacks.Checkpoint(
+                    monitor=f"{monitor_metric}_best",
+                    dirname=os.path.join(checkpoint_dir, monitor_metric)
+                    ))]
+    
+    early_stopping = [
+        skorch.callbacks.EarlyStopping(
+            monitor=monitor_metric, 
+            patience=int(early_stopping_fraction * max_epochs)
+        )
+    ]
 
     model = build_model(
         dataset_meta["n_categorical"], # List of number of categories
         dataset_meta["n_numerical"], # Number of numerical features
         config["n_head"], # Number of heads per layer
-        config["n_hid"], # Size of the MLP inside each transformer encoder layer
+        config["embed_dim"], # Size of the MLP inside each transformer encoder layer
         config["n_layers"], # Number of transformer encoder layers    
         n_outputs, # The number of output neurons
         config["embed_dim"],
@@ -158,12 +175,7 @@ def build_default_model_from_configs(
             dataset_meta["splits"][fold_name]["train"], 
             dataset_meta["splits"][fold_name]["val"]
         ),)),
-        callbacks=callback.get_default_callbacks(multiclass=multiclass), #+ [
-                #("checkpoint", skorch.callbacks.Checkpoint(
-                #    monitor=checkpoint_metric, 
-                #    dirname="best_model", 
-                #    ))
-            #],
+        callbacks=callback.get_default_callbacks(multiclass=multiclass) + checkpoint + early_stopping,
         learning_rate=config["optimizer__lr"],
         weight_decay=config["optimizer__weight_decay"]
         )
