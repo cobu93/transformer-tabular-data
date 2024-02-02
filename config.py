@@ -13,6 +13,13 @@ WORKER_JOBS = [
     {"dataset": "anneal", "aggregator": "mean"},
     {"dataset": "anneal", "aggregator": "rnn"},
     {"dataset": "anneal", "aggregator": "sum"},
+
+    {"dataset": "australian", "aggregator": "cls"},
+    {"dataset": "australian", "aggregator": "concatenate"},
+    {"dataset": "australian", "aggregator": "max"},
+    {"dataset": "australian", "aggregator": "mean"},
+    {"dataset": "australian", "aggregator": "rnn"},
+    {"dataset": "australian", "aggregator": "sum"},
 ]
 N_TRIALS = 64
 

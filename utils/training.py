@@ -114,7 +114,7 @@ def build_default_model_from_configs(
         batch_size=32,
         max_epochs=100,
         monitor_metric="valid_loss",
-        early_stopping_fraction=0.1,
+        early_stopping_fraction=0.2,
         checkpoint_dir="."
     ):
 

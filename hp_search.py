@@ -334,7 +334,9 @@ def main():
 
 
         run_trial = True
-        trials_count = 0
+        sweep = api.sweep(f"{entity}/{project}/sweeps/{sweep_id}")
+        sweep.load(force=True)
+        trials_count = len(sweep.runs)
         while run_trial:
             logger.info(f"Recovering sweep information")
             sweep = api.sweep(f"{entity}/{project}/sweeps/{sweep_id}")
@@ -347,7 +349,7 @@ def main():
                 logger.info(f"Running trial")
                 wandb.agent(
                     sweep_id, 
-                    function=cross_validate_builder(dataset, aggregator, f"T{existing_trials + 1}"), 
+                    function=cross_validate_builder(dataset, aggregator, f"T{trials_count + 1}"), 
                     entity=entity,
                     project=project, 
                     count=1
