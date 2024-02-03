@@ -334,31 +334,45 @@ def main():
 
 
         run_trial = True
-        sweep = api.sweep(f"{entity}/{project}/sweeps/{sweep_id}")
-        sweep.load(force=True)
-        trials_count = len(sweep.runs)
+        expected_trials = 0
+        max_execution_trials = None
+        executed_trials = []
+
         while run_trial:
             logger.info(f"Recovering sweep information")
             sweep = api.sweep(f"{entity}/{project}/sweeps/{sweep_id}")
             sweep.load(force=True)
             existing_trials = len(sweep.runs)
-            trials_left = n_trials - existing_trials
+            expected_trials = sweep.expected_run_count or n_trials
+
+            trials_left = expected_trials - existing_trials
+            max_execution_trials = max_execution_trials or trials_left
             logger.info(f"Sweep has {existing_trials} runs. {trials_left} trials left.")
-            
+
             if trials_left > 0:
-                logger.info(f"Running trial")
+                trial_name = f"T{existing_trials + 1}"
+                logger.info(f"Running trial {trial_name}")
+                
+                if trial_name in executed_trials:
+                    raise ValueError(f"Something went wrong: Trial {trial_name} executed before")
+                
+                executed_trials.append(trial_name)
                 wandb.agent(
                     sweep_id, 
-                    function=cross_validate_builder(dataset, aggregator, f"T{trials_count + 1}"), 
+                    function=cross_validate_builder(dataset, aggregator, trial_name), 
                     entity=entity,
                     project=project, 
                     count=1
                 )
                 wandb.finish()
+            
+            max_execution_trials -= 1
+            run_trial = trials_left > 0 and max_execution_trials > 0
 
-            trials_count += 1
+        logger.info("Trials executed:")
+        for t in executed_trials:
+            logger.info(f"\t{t}")
 
-            run_trial = trials_left - trials_count > 0
 
 if __name__ == "__main__":
     main()
