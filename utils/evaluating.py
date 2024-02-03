@@ -1,12 +1,17 @@
 from sklearn import metrics
+import numpy as np
 import skorch
 import os
 
-def get_default_scores(target, prediction, prefix="", multiclass=False):
+def get_default_scores(target, prediction_proba, prefix="", multiclass=False):
+
+    prediction = np.argmax(prediction_proba, axis=1)
+    labels = np.arange(prediction_proba.shape[-1])
 
     scores = {
         f"{prefix}balanced_accuracy": metrics.balanced_accuracy_score(target, prediction),
-        f"{prefix}accuracy": metrics.accuracy_score(target, prediction)
+        f"{prefix}accuracy": metrics.accuracy_score(target, prediction),
+        f"{prefix}log_loss": metrics.log_loss(target, prediction_proba, labels=labels)
     }
 
     if not multiclass:

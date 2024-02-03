@@ -145,7 +145,7 @@ def train(
         logger.info(f"\tCheckpoint {c}:" + " (scoring)" if c == SCORING else "")
         model = evaluating.load_model(model, os.path.join(checkpoint_dir, "model", c))
 
-        preds = model.predict({
+        preds = model.predict_proba({
                 "x_numerical": X[val_indices, :n_numerical].astype(np.float32),
                 "x_categorical": X[val_indices, n_numerical:].astype(np.int32)
             })
