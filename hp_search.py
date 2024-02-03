@@ -15,7 +15,6 @@ from config import (
     PROJECT_NAME,
     ENTITY_NAME,
     WORKER_JOBS,
-    N_TRIALS,
     DATA_BASE_DIR,
     CHECKPOINT_BASE_DIR,
     OPTIMIZER,
@@ -31,51 +30,9 @@ logger = log.get_logger()
 """
 Define the sweep configuration
 """
-SWEEP_SCORING_GOAL = "minimize"
-SWEEP_SCORING = "valid_loss"
+SCORING_GOAL = "minimize"
+SCORING = "valid_loss"
 
-sweep_configuration = {
-    "method": "grid",
-    "metric": {"goal": SWEEP_SCORING_GOAL, "name": f"{SWEEP_SCORING}_opt"},
-}
-
-parameters = {
-        "n_layers": {"values": [2, 3, 4, 5]},
-        "optimizer__lr": {"values": [1e-4]},
-        "optimizer__weight_decay": {"values": [1e-4]},
-        "n_head": {"values": [4, 8, 16, 32]},
-        # "n_hid": {"values": embed_dim}, # Defined in code
-        "attn_dropout": {"values": [0.3]},
-        "ff_dropout": {"values": [0.1]},
-        "embed_dim": {"values": [128, 256]},
-        "numerical_passthrough": {"values": [True, False]}
-    }
-
-
-rnn_parameters = {
-        "aggregator__cell": {"values": ["GRU"]},
-        "aggregator__hidden_size": {"values": [256]},
-        "aggregator__num_layers":  {"values": [1]},
-        "aggregator__dropout":  {"values": [0.]}
-}
-
-"""
-Reset the WandB environment variables
-"""
-def reset_wandb_env(exclude={
-        "WANDB_PROJECT",
-        "WANDB_ENTITY",
-        "WANDB_API_KEY",
-    }):
-
-    backup = {}
-    
-    for key in os.environ.keys():
-        if key.startswith("WANDB_") and key not in exclude:
-            backup[key] = os.environ[key]
-            del os.environ[key]
-
-    return backup
 
 """
 Training on split function
@@ -94,13 +51,27 @@ def train(
     logger.info("+" * 40 + f" Running {run_name}")
 
     checkpoint_dir = os.path.join(CHECKPOINT_BASE_DIR, dataset, aggregator, trial_name, fold_name)
+    
+    scores_file = os.path.join(checkpoint_dir, "scores.json")
+    
+    if os.path.exists(scores_file):
+        with open(scores_file, "r") as f:
+            summary_scores = json.load(f)
+
+        if SCORING in summary_scores.keys():
+            logger.info("This run has been executed before. Skipping.")
+            return summary_scores[SCORING]
+        else: 
+            summary_scores = None
+        
+    
     multiclass = len(dataset_meta["labels"]) > 2
     
-
     run = wandb.init(
         name=run_name,
+        project=PROJECT_NAME,
+        entity=ENTITY_NAME,
         group=f"{dataset}/{aggregator}/{trial_name}",
-        job_type="fold_run",
         config=config,
         reinit=True
     )
@@ -153,7 +124,7 @@ def train(
         optimizer=OPTIMIZER,
         device=DEVICE,
         batch_size=BATCH_SIZE,
-        monitor_metric=SWEEP_SCORING, 
+        monitor_metric=SCORING, 
         max_epochs=MAX_EPOCHS,
         checkpoint_dir=os.path.join(checkpoint_dir, "model"),
     )
@@ -171,7 +142,7 @@ def train(
     summary_scores = {}
     checkpoints_list = evaluating.list_models(os.path.join(checkpoint_dir, "model"))
     for c in checkpoints_list:
-        logger.info(f"\tCheckpoint {c}:" + " (sweep scoring)" if c == SWEEP_SCORING else "")
+        logger.info(f"\tCheckpoint {c}:" + " (scoring)" if c == SCORING else "")
         model = evaluating.load_model(model, os.path.join(checkpoint_dir, "model", c))
 
         preds = model.predict({
@@ -188,7 +159,7 @@ def train(
 
         summary_scores[c] = scores.copy()
 
-        if c == SWEEP_SCORING:
+        if c == SCORING:
             final_scores = scores.copy()
 
         for s_k, s_v in scores.items():
@@ -200,7 +171,7 @@ def train(
 
     logger.info("Saving scores")
 
-    with open(os.path.join(checkpoint_dir, "scores.json"), "w") as f:
+    with open(scores_file, "w") as f:
         json.dump(summary_scores, f, indent=4)
 
     logger.info("+" * 40 + f" Finishing {run_name}")
@@ -213,66 +184,42 @@ def train(
 Define the function performing the cross validation and its builder
 """
 
-def cross_validate_builder(dataset, aggregator, trial_name):
+def cross_validate(dataset, aggregator, trial_name, config):
 
-    def cross_validate():
+    sweep_run_name = f"{dataset}-{aggregator}-{trial_name}"
+    
+    logger.info("=" * 50 + f" Trial execution: {sweep_run_name}")  
 
-        sweep_run_name = f"{dataset}-{aggregator}-{trial_name}"
+    # Iterates every fold
+    logger.info(f"Reading {dataset} metadata")
+    meta_file = os.path.join(DATA_BASE_DIR, dataset, "train.meta.json")
+    dataset_meta = None
+    with open(meta_file, "r") as f:
+        dataset_meta = json.load(f)
+
+    splits = list(dataset_meta["splits"].keys())
+    logger.info(f"There are {len(splits)} splits")
+    
+
+    metrics = {}
+    for split in splits:
+        logger.info(f"Running split {split}")
         
-        logger.info("=" * 50 + f" Trial execution: {sweep_run_name}")  
-
-        sweep_run = wandb.init(
-            name=sweep_run_name,
-            group=f"{dataset}/{aggregator}",
-            job_type="trial_run",
-            reinit=True
+        train(
+            dataset,
+            aggregator,
+            trial_name,
+            split,
+            dataset_meta,
+            config=config
         )
 
-        sweep_run_id = sweep_run.id
-
-        if not sweep_run_id:
-            raise ValueError("Sweep run does not contains ID")
-        
-        sweep_run.finish()
-        wandb.sdk.wandb_setup._setup(_reset=True)
-
-        # Iterates every fold
-        logger.info(f"Reading {dataset} metadata")
-        meta_file = os.path.join(DATA_BASE_DIR, dataset, "train.meta.json")
-        dataset_meta = None
-        with open(meta_file, "r") as f:
-            dataset_meta = json.load(f)
-
-        splits = list(dataset_meta["splits"].keys())
-        logger.info(f"There are {len(splits)} splits")
         
 
-        metrics = {}
-        for split in splits:
-            logger.info(f"Running split {split}")
-            reset_wandb_env()
-            result = train(
-                dataset,
-                aggregator,
-                trial_name,
-                split,
-                dataset_meta,
-                config=dict(sweep_run.config)
-            )
+    logger.info("=" * 50 + f" Finishing trial: {sweep_run_name}")
 
-            metrics[split] = result
-
-        logger.info("Computing trial metrics")
-        metrics_df = pd.DataFrame(metrics)
-        logger.info("\n" + str(metrics_df))
-        # resume the sweep run
-        sweep_run = wandb.init(id=sweep_run_id, resume="must")
-        # log metric to sweep run
-        sweep_run.log(metrics_df.mean(axis=1).to_dict())
-        logger.info("=" * 50 + f" Finishing trial: {sweep_run_name}")
-        sweep_run.finish()
-
-    return cross_validate
+    
+    
 
 """
 Defines the main data flow, it includes:
@@ -282,96 +229,43 @@ Defines the main data flow, it includes:
 """
 def main():
 
+    logger.info("Logging in WandB")
     wandb.login()
-    api = wandb.Api()
+
 
     for job in WORKER_JOBS:
 
         dataset = job["dataset"]
         aggregator = job["aggregator"]
-        project = PROJECT_NAME
-        entity = ENTITY_NAME
-        n_trials = N_TRIALS
 
-        logger.info("Recovering sweeps")
-        logger.info(f"\tProject: {project}")
+        logger.info("-" * 60 + f"Running worker {dataset}-{aggregator}")
 
-        sweeps = wandb.Api().project(project, entity=entity).sweeps()
+        archs_file = os.path.join(DATA_BASE_DIR, "architectures.json")
+        logger.info(f"Reading architectures from {archs_file}")
+        architectures = None
+        with open(archs_file, "r") as f:
+            architectures = json.load(f)
+
+        architectures = architectures.get("rnn" if aggregator == "rnn" else "regular", None)
         
-        logger.info("Searching in sweeps")
-        logger.info(f"\tDataset: {dataset}")
-        logger.info(f"\tAggregator: {aggregator}")
+        if not architectures:
+            logger.fatal("The architectures file is incorrect")
+            raise ValueError("The architectures file is incorrect")
+
+        logger.info(f"There exists {len(architectures)} architectures")
+        logger.info(f"Appending dataset and aggregator to configurations")
+
+        for _, arch in architectures.items():
+            arch["dataset"] = dataset
+            arch["aggregator"] = aggregator
         
-
-        sweep_name = f"{dataset}-{aggregator}"
-        sweep_id = None
-
-        for s in sweeps:
-            if s.name == sweep_name:
-                sweep_id = s.id
-                break
-        
-        if not sweep_id:
-            logger.info("Sweep does not exists. Creating.")
-
-            s_config = sweep_configuration.copy()
-            s_config["name"] = sweep_name
-            s_config["parameters"] = {
-                **parameters, 
-                "dataset": {"value": dataset}, 
-                "aggregator": {"value": aggregator}
-            }
-
-            if aggregator == "rnn":
-                logger.info("Appending RNN aggregator configuration")
-                s_config["parameters"] = {**s_config["parameters"], **rnn_parameters}
-
-
-            sweep_id = wandb.sweep(s_config, project=project, entity=entity)
-            logger.info(f"Sweep created with id {sweep_id}")
-        else:
-            logger.info(f"Sweep found with id {sweep_id}")
-
-
-        run_trial = True
-        expected_trials = 0
-        max_execution_trials = None
-        executed_trials = []
-
-        while run_trial:
-            logger.info(f"Recovering sweep information")
-            sweep = api.sweep(f"{entity}/{project}/sweeps/{sweep_id}")
-            sweep.load(force=True)
-            existing_trials = len(sweep.runs)
-            expected_trials = sweep.expected_run_count or n_trials
-
-            trials_left = expected_trials - existing_trials
-            max_execution_trials = max_execution_trials or trials_left
-            logger.info(f"Sweep has {existing_trials} runs. {trials_left} trials left.")
-
-            if trials_left > 0:
-                trial_name = f"T{existing_trials + 1}"
-                logger.info(f"Running trial {trial_name}")
-                
-                if trial_name in executed_trials:
-                    raise ValueError(f"Something went wrong: Trial {trial_name} executed before")
-                
-                executed_trials.append(trial_name)
-                wandb.agent(
-                    sweep_id, 
-                    function=cross_validate_builder(dataset, aggregator, trial_name), 
-                    entity=entity,
-                    project=project, 
-                    count=1
-                )
-                wandb.finish()
+        for arch_name, arch in architectures.items():
+            cross_validate(dataset, aggregator, arch_name, arch)
             
-            max_execution_trials -= 1
-            run_trial = trials_left > 0 and max_execution_trials > 0
 
-        logger.info("Trials executed:")
-        for t in executed_trials:
-            logger.info(f"\t{t}")
+        logger.info("-" * 60 + f"Worker finished {dataset}-{aggregator}")
+
+            
 
 
 if __name__ == "__main__":

@@ -9,7 +9,14 @@ import pandas as pd
 from sklearn import cluster, model_selection
 import numpy as np
 import openml
-from config import SEED, DATASETS_FILE, DATA_BASE_DIR, TEST_PARTITION, K_FOLD
+from config import (
+            SEED, 
+            DATASETS_FILE, 
+            DATA_BASE_DIR, 
+            TEST_PARTITION, 
+            K_FOLD, 
+            HYPERPARAMETERS_FILE
+            )
 from utils import log, data
 import os
 import json
@@ -18,6 +25,50 @@ logger = log.get_logger()
 
 np.random.seed(SEED)
 
+
+
+logger.info("=" * 50 + "Setup architectures")
+
+with open(HYPERPARAMETERS_FILE, "r") as f:
+    hp_space = json.load(f)
+
+architectures = {"regular": {}, "rnn": {}}
+
+parameters = hp_space["parameters"]
+rnn_parameters = hp_space["rnn_parameters"]
+param_grid = list(model_selection.ParameterGrid(parameters))
+
+logger.info(f"There are {len(param_grid)} regular architectures")
+for i, arch in enumerate(param_grid):
+    architectures["regular"][f"A{i}"] = arch
+    
+parameters = hp_space["parameters"]
+rnn_parameters = hp_space["rnn_parameters"]
+
+rnn_param_grid = list(model_selection.ParameterGrid({
+                                        **parameters,
+                                        **rnn_parameters
+                                        }))
+
+logger.info(f"There are {len(rnn_param_grid)} RNN architectures")
+for i, arch in enumerate(rnn_param_grid):
+    architectures["rnn"][f"A{i}"] = arch
+
+
+archs_file = os.path.join(DATA_BASE_DIR, "architectures.json")
+if os.path.exists(archs_file):
+    with open(archs_file, "r") as f:
+        old_architectures = json.load(f)
+    
+    if str(dict(sorted(old_architectures.items()))) != str(dict(sorted(architectures.items()))):
+        logger.fatal("Previous an current architectures are not the same")
+        raise ValueError("Previous an current architectures are not the same")
+else:
+    with open(archs_file, "w") as f:
+        json.dump(architectures, f, indent=4)
+
+
+logger.info("=" * 50 + "Setup data")
 # Read and validate datasets' information
 logger.info("Validating dataset's information")
 df = pd.read_csv(DATASETS_FILE)
@@ -163,8 +214,5 @@ for ds in df_selected.iloc:
     X_train.to_csv(train_data_file, index=False)
 
 
-
-
-    #print(X_train)
-    #print(y_train)
+    
 

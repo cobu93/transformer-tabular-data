@@ -21,9 +21,9 @@ WORKER_JOBS = [
     {"dataset": "australian", "aggregator": "rnn"},
     {"dataset": "australian", "aggregator": "sum"},
 ]
-N_TRIALS = 64
 
 DATASETS_FILE = "datasets.csv"
+HYPERPARAMETERS_FILE = "hyperparameters.json"
 DATA_BASE_DIR = "data"
 CHECKPOINT_BASE_DIR = "checkpoint"
 SEED = 11

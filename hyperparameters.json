@@ -1,0 +1,18 @@
+{
+    "parameters": {
+        "n_layers": [2, 3, 4, 5],
+        "optimizer__lr": [1e-4],
+        "optimizer__weight_decay": [1e-4],
+        "n_head": [4, 8, 16, 32],
+        "attn_dropout": [0.3],
+        "ff_dropout": [0.1],
+        "embed_dim": [128, 256],
+        "numerical_passthrough": ["true", "false"]
+    },
+    "rnn_parameters": {
+        "aggregator__cell": ["GRU"],
+        "aggregator__hidden_size": [256],
+        "aggregator__num_layers":  [1],
+        "aggregator__dropout":  [0]
+    }
+}
