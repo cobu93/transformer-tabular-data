@@ -89,6 +89,7 @@ def train(
         dataset_meta["categorical"],
         dataset_meta["numerical"],
         dataset_meta["categories"],
+        categorical_unknown_value=-1
     )
 
     logger.info("Reading data")

@@ -21,6 +21,7 @@ def get_preprocessor(
         categorical_columns,
         numerical_columns,
         categories,
+        categorical_unknown_value=np.nan,
         n_neighbors=10
     ):
 
@@ -31,7 +32,7 @@ def get_preprocessor(
     categorical_transformer = preprocessing.OrdinalEncoder(
                     categories=categories,
                     handle_unknown="use_encoded_value", 
-                    unknown_value=np.nan
+                    unknown_value=categorical_unknown_value
                 )
     
     offset_transformer = OffsetTransformer()
