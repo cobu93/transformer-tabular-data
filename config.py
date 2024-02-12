@@ -23,7 +23,8 @@ WORKER_JOBS = [
 ]
 
 RUN_EXCEPTIONS = [
-    {"dataset": "sylvine", "numerical_passthrough": True}
+    {"dataset": "sylvine", "numerical_passthrough": True},
+    {"dataset": "volkert", "numerical_passthrough": True}
 ]
 
 DATASETS_FILE = "datasets.csv"

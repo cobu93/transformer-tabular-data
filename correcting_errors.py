@@ -66,7 +66,9 @@ for run in runs:
     with open(filename, "r") as file:
         info = file.read()
 
-    if "'numerical_passthrough': 'false'" in info:
+    if "'numerical_passthrough': 'false'" in info \
+    	or "'dataset': 'volkert'" in info \
+	or "'dataset': 'anneal'" in info :
         to_delete_runs.append(run)
 
     if "'numerical_passthrough': 'true'" in info:
