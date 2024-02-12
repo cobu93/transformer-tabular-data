@@ -6,7 +6,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -16,7 +16,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -26,7 +26,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -36,7 +36,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -46,7 +46,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -56,7 +56,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -66,7 +66,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -76,7 +76,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -86,7 +86,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -96,7 +96,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -106,7 +106,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -116,7 +116,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -126,7 +126,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -136,7 +136,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -146,7 +146,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -156,7 +156,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -166,7 +166,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -176,7 +176,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -186,7 +186,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -196,7 +196,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -206,7 +206,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -216,7 +216,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -226,7 +226,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -236,7 +236,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -246,7 +246,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -256,7 +256,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -266,7 +266,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -276,7 +276,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -286,7 +286,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -296,7 +296,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -306,7 +306,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -316,7 +316,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -326,7 +326,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -336,7 +336,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -346,7 +346,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -356,7 +356,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -366,7 +366,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -376,7 +376,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -386,7 +386,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -396,7 +396,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -406,7 +406,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -416,7 +416,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -426,7 +426,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -436,7 +436,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -446,7 +446,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -456,7 +456,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -466,7 +466,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -476,7 +476,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -486,7 +486,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -496,7 +496,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -506,7 +506,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -516,7 +516,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -526,7 +526,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -536,7 +536,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -546,7 +546,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -556,7 +556,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -566,7 +566,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -576,7 +576,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -586,7 +586,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -596,7 +596,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -606,7 +606,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -616,7 +616,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -626,7 +626,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -636,7 +636,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         }
@@ -652,7 +652,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -666,7 +666,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -680,7 +680,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -694,7 +694,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -708,7 +708,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -722,7 +722,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -736,7 +736,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -750,7 +750,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -764,7 +764,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -778,7 +778,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -792,7 +792,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -806,7 +806,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -820,7 +820,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -834,7 +834,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -848,7 +848,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -862,7 +862,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -876,7 +876,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -890,7 +890,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -904,7 +904,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -918,7 +918,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -932,7 +932,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -946,7 +946,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -960,7 +960,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -974,7 +974,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -988,7 +988,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1002,7 +1002,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1016,7 +1016,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1030,7 +1030,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1044,7 +1044,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1058,7 +1058,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1072,7 +1072,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1086,7 +1086,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1100,7 +1100,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1114,7 +1114,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1128,7 +1128,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1142,7 +1142,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1156,7 +1156,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1170,7 +1170,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1184,7 +1184,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1198,7 +1198,7 @@
             "ff_dropout": 0.1,
             "n_head": 4,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1212,7 +1212,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1226,7 +1226,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1240,7 +1240,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1254,7 +1254,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1268,7 +1268,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1282,7 +1282,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1296,7 +1296,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1310,7 +1310,7 @@
             "ff_dropout": 0.1,
             "n_head": 8,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1324,7 +1324,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1338,7 +1338,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1352,7 +1352,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1366,7 +1366,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1380,7 +1380,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1394,7 +1394,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1408,7 +1408,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1422,7 +1422,7 @@
             "ff_dropout": 0.1,
             "n_head": 16,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1436,7 +1436,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 2,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1450,7 +1450,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 2,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1464,7 +1464,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 3,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1478,7 +1478,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 3,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1492,7 +1492,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 4,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1506,7 +1506,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 4,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1520,7 +1520,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 5,
-            "numerical_passthrough": "true",
+            "numerical_passthrough": true,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         },
@@ -1534,7 +1534,7 @@
             "ff_dropout": 0.1,
             "n_head": 32,
             "n_layers": 5,
-            "numerical_passthrough": "false",
+            "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
         }

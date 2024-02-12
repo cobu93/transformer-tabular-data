@@ -7,7 +7,7 @@
         "attn_dropout": [0.3],
         "ff_dropout": [0.1],
         "embed_dim": [128, 256],
-        "numerical_passthrough": ["true", "false"]
+        "numerical_passthrough": [true, false]
     },
     "rnn_parameters": {
         "aggregator__cell": ["GRU"],
