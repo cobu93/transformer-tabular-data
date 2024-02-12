@@ -166,11 +166,7 @@ def train(
 
         for s_k, s_v in scores.items():
             logger.info(f"\t\t{s_k}: {s_v}")
-
         
-        logger.info("\tCompressing and saving model")
-        joblib.dump(model, os.path.join(checkpoint_dir, f"model.{c}.jl"))
-
     logger.info("Saving scores")
 
     with open(scores_file, "w") as f:
