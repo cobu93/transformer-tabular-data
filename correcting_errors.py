@@ -163,7 +163,7 @@ for dataset in os.listdir("checkpoint"):
                             raise ValueError(f"Preprocessing failed, not equal result: {checkpoint_name}")
                         
                         print(f"Saving refactored preprocessor {checkpoint_name}/preprocessor.jl")
-                        joblib.dump(preprocessor, os.path.join(checkpoint_name, "preprocessor.jl"))
+                        joblib.dump(new_preprocessor, os.path.join(checkpoint_name, "preprocessor.jl"))
 
 
 
