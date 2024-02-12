@@ -20,6 +20,7 @@ from config import (
     OPTIMIZER,
     MAX_EPOCHS,
     BATCH_SIZE,
+    RUN_EXCEPTIONS,
     DEVICE
 )
 
@@ -259,9 +260,20 @@ def main():
         for _, arch in architectures.items():
             arch["dataset"] = dataset
             arch["aggregator"] = aggregator
-        
+
         for arch_name, arch in architectures.items():
-            cross_validate(dataset, aggregator, arch_name, arch)
+            skip_run = True
+            checked_items = 0
+            
+            for run_exception in RUN_EXCEPTIONS:
+                for k, v in run_exception.items():
+                    skip_run = skip_run and (arch.get(k, None) == v)
+                    checked_items += 1
+
+            if skip_run and checked_items > 0:
+                logger.info(f"Skipping run because it is in exceptions: {dataset}-{aggregator}-{arch_name}")
+            else:
+                cross_validate(dataset, aggregator, arch_name, arch)
             
 
         logger.info("-" * 60 + f"Worker finished {dataset}-{aggregator}")

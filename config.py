@@ -22,6 +22,10 @@ WORKER_JOBS = [
     {"dataset": "australian", "aggregator": "sum"},
 ]
 
+RUN_EXCEPTIONS = [
+    {"dataset": "sylvine", "numerical_passthrough": True}
+]
+
 DATASETS_FILE = "datasets.csv"
 HYPERPARAMETERS_FILE = "hyperparameters.json"
 DATA_BASE_DIR = "data"
