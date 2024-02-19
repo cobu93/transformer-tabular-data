@@ -262,9 +262,16 @@ def main():
             checked_items = 0
             
             for run_exception in RUN_EXCEPTIONS:
+
+                skip_run = True
+                checked_items = 0
+
                 for k, v in run_exception.items():
                     skip_run = skip_run and (arch.get(k, None) == v)
                     checked_items += 1
+
+                if skip_run and checked_items > 0:
+                    break
 
             if skip_run and checked_items > 0:
                 logger.info(f"Skipping run because it is in exceptions: {dataset}-{aggregator}-{arch_name}")
