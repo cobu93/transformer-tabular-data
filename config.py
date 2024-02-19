@@ -90,6 +90,15 @@ MAX_EPOCHS = 150
 BATCH_SIZE = 32
 OPTIMIZER = torch.optim.AdamW
 
+REFIT_SELECTION_METRICS = [
+                            {
+                                "metric": "balanced_accuracy",
+                                "mode": "max"
+                            },{
+                                "metric": "log_loss",
+                                "mode": "min"
+                            }
+                        ]
 """
 Reporting variables
 """

@@ -150,6 +150,15 @@ def build_default_model_from_configs(
         )
     ]
 
+    if fold_name:
+        train_split = skorch.dataset.ValidSplit(((
+            dataset_meta["splits"][fold_name]["train"], 
+            dataset_meta["splits"][fold_name]["val"]
+        ),))
+    else:
+        train_split = None
+
+
     model = build_model(
         dataset_meta["n_categorical"], # List of number of categories
         dataset_meta["n_numerical"], # Number of numerical features
@@ -171,10 +180,7 @@ def build_default_model_from_configs(
         device=device,
         batch_size=batch_size,
         max_epochs=max_epochs,
-        train_split=skorch.dataset.ValidSplit(((
-            dataset_meta["splits"][fold_name]["train"], 
-            dataset_meta["splits"][fold_name]["val"]
-        ),)),
+        train_split=train_split,
         callbacks=callback.get_default_callbacks(multiclass=multiclass) + checkpoint + early_stopping,
         learning_rate=config["optimizer__lr"],
         weight_decay=config["optimizer__weight_decay"]
