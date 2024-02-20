@@ -164,6 +164,14 @@ def refit(
     test_labels = test_data[target_column]
     
     logger.info(f"\tPreprocessing test data")
+    
+    for c in test_features.columns:
+        columns_uniques = test_features[c].unique()
+        if len(columns_uniques) == 1 \
+            and not isinstance(columns_uniques[0], str) \
+            and np.isnan(columns_uniques[0]):
+            test_features[c] = test_features[c].astype("object")
+
     X_test = preprocessor.transform(test_features)
     y_test = test_labels.values
 
@@ -237,7 +245,9 @@ def main():
     logger.info(f"Total architectures: {len(best_archs_df)}")
     best_archs_df = best_archs_df.dropna(subset=[f"{m['metric']}_mean" for m in REFIT_SELECTION_METRICS])
     logger.info(f"After removing nan: {len(best_archs_df)}")
-    best_archs_df_unique = best_archs_df.drop_duplicates(subset=["dataset", "aggregator", "architecture_name"])
+    best_archs_df_unique = best_archs_df \
+                                .drop_duplicates(subset=["dataset", "aggregator", "architecture_name"]) \
+                                .sort_values("dataset")
     logger.info(f"There are {len(best_archs_df)} unique architectures to train")
 
     archs_file = os.path.join(DATA_BASE_DIR, "architectures.json")
@@ -245,6 +255,9 @@ def main():
     architectures = None
     with open(archs_file, "r") as f:
         architectures = json.load(f)
+
+    logger.info("Thebest architectures are:")
+    logger.info(str(best_archs_df_unique))
 
     scores = []
     for job in best_archs_df_unique.iloc:
@@ -297,7 +310,7 @@ def main():
     best_archs_df = best_archs_df.merge(
                         pd.DataFrame(scores), 
                         on=["dataset", "aggregator", "architecture_name"]
-                    )
+                    ).sort_values("dataset")
 
     logger.info("Saving scored architectures")
     best_archs_df.to_csv("selected_architectures.csv", index=False)        
