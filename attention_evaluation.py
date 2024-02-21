@@ -136,6 +136,7 @@ def extract_attention(
     
 
     n_instances, n_features = X.shape
+    n_features -= n_numerical if config["numerical_passthrough"] else 0
     
     if aggregator == "cls":
         n_features += 1
