@@ -4,13 +4,15 @@ import json
 import pandas as pd
 import joblib
 import skorch
-from utils import training, log
-import torch
+from utils import training, log, attention, evaluating, processing
+
+from sklearn import linear_model, pipeline, svm, neighbors, base
 
 from config import (
     DATA_BASE_DIR,
     OPTIMIZER,
     BATCH_SIZE,
+    CHECKPOINT_BASE_DIR,
     DEVICE
 )
 
@@ -27,47 +29,20 @@ SCORING = "valid_loss"
 Training on split function
 """
 
+def read_meta_csv(dirname, file_prefix):
+    dataset_file = os.path.join(dirname, f"{file_prefix}.csv")
+    meta_file = os.path.join(dirname, f"{file_prefix}.meta.json")
+    data = pd.read_csv(dataset_file)
 
-def compute_std_attentions(attn, aggregator):
-    batch_size = attn.shape[1]
-    n_layers = attn.shape[0]
-    n_features = attn.shape[-1]
+    with open(meta_file, "r") as f:
+        meta = json.load(f)
 
-    # Sum heads
-    # layers, batch, heads, o_features, i_features
-    heads_attn = attn.mean(axis=2)
+    return data, meta
 
-    # Initial: layers, batch, o_features, i_features
-    # Final: batch, layers, i_features, o_features
-    heads_attn = heads_attn.permute((1, 0, 3, 2))
-    general_attn = None
-
-    # For each layer
-    single_attns = torch.zeros((batch_size, n_layers, n_features))
-    cum_attns = torch.zeros((batch_size, n_layers, n_features))
-
-    for layer_idx in range(n_layers):
-        if layer_idx == n_layers - 1 and aggregator == "cls":
-            single_attns[:, layer_idx] = heads_attn[:, layer_idx, :, 0]
-        else:
-            single_attns[:, layer_idx] = heads_attn[:, layer_idx].mean(axis=-1)
-        
-        if general_attn is None:
-            general_attn = heads_attn[:, layer_idx]
-        else:
-            general_attn = torch.matmul(general_attn, heads_attn[:, layer_idx])
-
-        if layer_idx == n_layers - 1 and aggregator == "cls":
-            cum_attns[:, layer_idx] = general_attn[:, :, 0]
-        else:
-            cum_attns[:, layer_idx] = general_attn.mean(axis=-1)
-
-    # assert np.allclose(single_attns.sum(axis=-1), 1), "There is a logistic problem: " + str(single_attns.sum(axis=-1))
-    # assert np.allclose(cum_attns.sum(axis=-1), 1), "There is a logistic problem: " + str(cum_attns.sum(axis=-1))
-
-    # Before: batch_size, n_layers, n_features
-    # After: n_layers, batch_size, n_features
-    return single_attns.permute((1, 0, 2)), cum_attns.permute((1, 0, 2))
+def processing_return_features(X, aggregator):
+    if aggregator == "cls":
+        return np.hstack((np.zeros((X.shape[0], 1)), X))
+    return X
 
 
 def extract_attention(
@@ -75,7 +50,6 @@ def extract_attention(
         checkpoint_dir,
         aggregator,
         selection_metric,
-        dataset_meta,
         config
     ):
     
@@ -83,31 +57,35 @@ def extract_attention(
     logger.info("+" * 40 + f" Extracting {run_name}")
 
     data_dir = os.path.join(DATA_BASE_DIR, dataset, "attention", selection_metric)
-    logger.info("Saving attention at " + data_dir)
-    
+    attention_file = os.path.join(data_dir, "attention.npy")
+        
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
-    multiclass = len(dataset_meta["labels"]) > 2
-    
     logger.info(f"Loading preprocessor")
     preprocessor = joblib.load(os.path.join(checkpoint_dir, "preprocessor.jl"))
 
     logger.info("Reading data")
+    
+    datasets_dirname = os.path.join(DATA_BASE_DIR, dataset)
+    train_data, dataset_meta = read_meta_csv(datasets_dirname, "train")
+    train_indices = dataset_meta["df_indices"]
     target_column = dataset_meta["target"]
     n_numerical = dataset_meta["n_numerical"]
-    
-    train_dataset_file = os.path.join(DATA_BASE_DIR, dataset, "train.csv")
-    train_data = pd.read_csv(train_dataset_file)
     logger.info(f"Training size: {train_data.shape}")
 
-    test_dataset_file = os.path.join(DATA_BASE_DIR, dataset, "test.csv")
-    test_data = pd.read_csv(test_dataset_file)
+    test_data, test_dataset_meta = read_meta_csv(datasets_dirname, "test")
+    test_indices = test_dataset_meta["df_indices"]
     logger.info(f"Test size: {test_data.shape}")
 
     data = pd.concat([train_data, test_data], axis=0)
     logger.info(f"Total size: {data.shape}")
 
+    logger.info("Sorting dataset as original")
+    indices = train_indices + test_indices
+    data.index = indices
+    data = data.sort_index()
+    
     features = data.drop(target_column, axis=1)
     labels = data[target_column]
     
@@ -115,10 +93,19 @@ def extract_attention(
     X = preprocessor.transform(features)
     y = labels.values
 
+    multiclass = len(dataset_meta["labels"]) > 2
+    
     if multiclass:
         y = y.astype(np.int64)
     else:
         y = y.astype(np.float32)
+
+
+    if os.path.exists(attention_file):
+        logger.info("Skipping extraction. Attention file exists.")
+        with open(attention_file, "rb") as f:
+            cum_attns = np.load(f)
+        return cum_attns
 
     logger.info("Building model")
     model = training.build_default_model_from_configs(
@@ -147,11 +134,133 @@ def extract_attention(
             "x_categorical": X[:, n_numerical:].astype(np.int32)
         })
     
-    for preds in preds_iter:
-        output, layer_outs, attn = preds
-        _, cum_attn = compute_std_attentions(attn, aggregator)
-        
 
+    n_instances, n_features = X.shape
+    
+    if aggregator == "cls":
+        n_features += 1
+    
+    cum_attns = np.zeros((n_instances, n_features))
+
+    for i, preds in enumerate(preds_iter):
+        output, layer_outs, attn = preds
+        _, batch_cum_attn = attention.compute_std_attentions(attn, aggregator)
+        cum_attns[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] = batch_cum_attn[-1]
+        
+    assert np.allclose(cum_attns.sum(axis=1), 1), "Something went wrong with attentions"
+    
+    logger.info("Saving attention at " + data_dir)
+    
+    with open(attention_file, "wb") as f:
+        np.save(f, cum_attns)
+
+    return cum_attns
+    
+
+def attention_percent_evaluation(
+    dataset,
+    aggregator,
+    cum_attn,
+    selection_metric,
+    attn_selectors=[0.9],
+    models=[{"name": "LR", "model": linear_model.LogisticRegression()}]
+    ):
+
+    logger.info("Reading data")
+    
+    datasets_dirname = os.path.join(DATA_BASE_DIR, dataset)
+    train_data, dataset_meta = read_meta_csv(datasets_dirname, "train")
+    splits = dataset_meta["splits"]
+    target_column = dataset_meta["target"]
+    features = train_data.drop(target_column, axis=1)
+    labels = train_data[target_column]
+    multiclass = len(dataset_meta["labels"]) > 2
+
+    logger.info("=" * 30 + " Masking method")
+    eval_data = []
+
+    for s in attn_selectors:
+        logger.info(f"Attention selector: {s}")
+        attn_mask = attention.get_attention_mask(cum_attn, s)
+
+        if aggregator == "cls":
+            attn_mask = attn_mask[:, 1:]
+
+        mask_df = pd.DataFrame(data=attn_mask, columns=features.columns)
+        train_data = train_data[mask_df]
+
+        for m_info in models:
+            m_name = m_info["name"]
+            m = m_info["model"]
+            logger.info(f"Model: {m_name}")
+
+            general_clf = pipeline.make_pipeline(
+                processing.get_regular_preprocessor(
+                    dataset_meta["categorical"],
+                    dataset_meta["numerical"],
+                    dataset_meta["categories"],
+                ),
+                m
+            )
+
+            for s_name, s_indices in splits.items():
+
+                logger.info(f"Fold: {s_name}")
+
+                clf_checkpoint = os.path.join(
+                                    CHECKPOINT_BASE_DIR, 
+                                    dataset,
+                                    "attention",
+                                    selection_metric,
+                                    m_name,
+                                    s_name
+                                    )
+                
+                if not os.path.exists(clf_checkpoint):
+                    os.makedirs(clf_checkpoint)
+
+                scores_checkpoint = os.path.join(clf_checkpoint, "scores.json")
+
+                if not os.path.exists(scores_checkpoint):
+                
+                    clf = base.clone(general_clf)
+
+                    clf = clf.fit(
+                        train_data.loc[s_indices["train"]],
+                        labels.loc[s_indices["train"]]
+                    )
+
+                    joblib.dump(clf, os.path.join(clf_checkpoint, "model.jl"))
+
+                    preds = clf.predict_proba(train_data.loc[s_indices["val"]])
+
+                    scores = evaluating.get_default_scores(
+                        labels[s_indices["val"]], preds, multiclass=multiclass
+                    )
+
+                    with open(scores_checkpoint, "w") as f:
+                        json.dump(scores, f, indent=4)
+
+                else:
+                    logger.info("Skipping because it was trained before")
+                    with open(scores_checkpoint, "r") as f:
+                        scores = json.load(f)
+
+                for k, v in scores.items():
+                    logger.info(f"\t{k}: {v}")
+
+                scores = {
+                    "model": m_name,
+                    "fold": s_name,
+                    "attention_selection": s,
+                    "selection_metric": selection_metric,
+                    **scores
+                }
+
+                eval_data.append(scores)
+
+    return eval_data
+                
 
 
 """
@@ -203,20 +312,27 @@ def main():
         arch["dataset"] = dataset
         arch["aggregator"] = aggregator
 
-        logger.info(f"Reading {dataset} metadata")
-        meta_file = os.path.join(DATA_BASE_DIR, dataset, "train.meta.json")
-        dataset_meta = None
-        with open(meta_file, "r") as f:
-            dataset_meta = json.load(f)
-            
-        extract_attention(
+        cum_attn = extract_attention(
             dataset,
             checkpoint_dir,
             aggregator,
             selection_metric,
-            dataset_meta,
             config=arch
         )
+
+        attention_percent_evaluation(
+            dataset,
+            aggregator,
+            cum_attn,
+            selection_metric,
+            attn_selectors = np.arange(0.1, 1.1, .1),
+            models=[
+                {"name":"KNN", "model": neighbors.KNeighborsClassifier()},
+                {"name":"SVC", "model": svm.SVC()},
+                {"name":"LR", "model": linear_model.LogisticRegression()}
+            ]
+        )
+
 
         logger.info("-" * 60 + f"Worker finished {dataset}-{selection_metric}")
 
