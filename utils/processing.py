@@ -67,8 +67,6 @@ def get_regular_preprocessor(
 
     categories = [categories[k] for k in categorical_columns]
 
-    imputer = impute.KNNImputer(n_neighbors=n_neighbors, keep_empty_features=True)
-
     categorical_transformer = preprocessing.OneHotEncoder(
                     categories=categories,
                     handle_unknown="infrequent_if_exist",
@@ -81,11 +79,16 @@ def get_regular_preprocessor(
         ("encodig_scaling", compose.ColumnTransformer(
             remainder="passthrough", #passthough features not listed
             transformers=[
-                ('numerical_transformer', numerical_transformer , numerical_columns),
-                ("categorical_transformer", categorical_transformer, categorical_columns),
+                ('numerical_transformer', pipeline.Pipeline([
+                        ("encoding", numerical_transformer),
+                        ("imputer", impute.SimpleImputer(strategy="constant"))                                               
+                ]) , numerical_columns),
+                ("categorical_transformer", pipeline.Pipeline([
+                        ("imputer", impute.SimpleImputer(strategy="constant")),
+                        ("encoding", categorical_transformer)                        
+                ]), categorical_columns),
             ])
-        ),
-        ("imputation", imputer)
+        )
     ])
 
     return preprocessor

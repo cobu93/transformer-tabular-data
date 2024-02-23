@@ -104,4 +104,6 @@ Reporting variables
 """
 
 ASSETS_DIR = "assets"
+TEST_TRAININGS = 10
+FEATURE_SELECTION_K_FOLD = 10
 

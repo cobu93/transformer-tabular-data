@@ -45,19 +45,22 @@ def compute_std_attentions(attn, aggregator):
 
 def get_attention_mask(attn, selector, as_binary=True):
 
+    if selector >= 1:
+        full_attn = attn.copy()
+        if as_binary:
+            full_attn[:, :] = 1
+            full_attn = full_attn.astype(bool)
+
+        return full_attn
+
     sorted_args = np.argsort(attn, axis=-1)[:, ::-1]
     inv_sorted_args = np.argsort(sorted_args, axis=-1)
     sorted_attn = np.take_along_axis(attn, sorted_args, axis=1)
 
-    # Percent selection
-    if selector <= 1:
-        attn_cum_sum = sorted_attn.cumsum(axis=-1)
-        sorted_attn[attn_cum_sum > selector] = 0
-        sorted_attn = np.take_along_axis(sorted_attn, inv_sorted_args, axis=1)
-    # Top k selection selection
-    else:
-        sorted_attn[int(selector):] = 0
-        sorted_attn = np.take_along_axis(sorted_attn, inv_sorted_args, axis=1)
+    attn_cum_sum = sorted_attn.cumsum(axis=-1)
+    sorted_attn[attn_cum_sum > selector] = 0
+    sorted_attn = np.take_along_axis(sorted_attn, inv_sorted_args, axis=1)
+
     
     if as_binary:
         sorted_attn[sorted_attn > 0] = 1

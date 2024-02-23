@@ -20,7 +20,8 @@ from config import (
     OPTIMIZER,
     REFIT_SELECTION_METRICS,
     BATCH_SIZE,
-    DEVICE
+    DEVICE,
+    TEST_TRAININGS
 )
 
 from utils import log
@@ -43,16 +44,17 @@ def refit(
         aggregator,
         architecture_name, 
         selection_metric,
+        trial_name,
         dataset_meta,
         config,
         best_tag="best",
-        extra_epochs_part=0. # With 100% for training / 5 = 20%, then with 20% extra data, we train 20% more
+        extra_epochs_part=0.2 # With 100% for training / 5 = 20%, then with 20% extra data, we train 20% more
     ):
     
-    run_name = f"{dataset}-{best_tag}-{selection_metric}"
+    run_name = f"{dataset}-{best_tag}-{selection_metric}-{trial_name}"
     logger.info("+" * 40 + f" Running {run_name}")
 
-    checkpoint_dir = os.path.join(CHECKPOINT_BASE_DIR, dataset, best_tag, selection_metric)
+    checkpoint_dir = os.path.join(CHECKPOINT_BASE_DIR, dataset, best_tag, selection_metric, trial_name)
     logger.info("Checkpoint dir " + checkpoint_dir)
     
     scores_file = os.path.join(checkpoint_dir, "scores.json")
@@ -69,7 +71,7 @@ def refit(
         name=run_name,
         project=PROJECT_NAME,
         entity=ENTITY_NAME,
-        group=f"{dataset}/{best_tag}/{selection_metric}",
+        group=f"{dataset}/{best_tag}/{selection_metric}/{trial_name}",
         config=config,
         reinit=True
     )
@@ -287,31 +289,66 @@ def main():
         dataset_meta = None
         with open(meta_file, "r") as f:
             dataset_meta = json.load(f)
-            
-        results, checkpoint_dir = refit(
-            dataset,
-            aggregator,
-            arch_name,
-            selection_metric,
-            dataset_meta,
-            config=arch
-        )
+        
+        for t_training in range(TEST_TRAININGS):
+            trial_name = f"T{t_training}"
 
-        scores.append({
-            **{f"{k}_test": v for k, v in results.items()},
-            "dataset": dataset,
-            "aggregator": aggregator,
-            "architecture_name": arch_name,
-            "checkpoint_dir": checkpoint_dir
-        })
+            results, checkpoint_dir = refit(
+                dataset,
+                aggregator,
+                arch_name,
+                selection_metric,
+                trial_name,
+                dataset_meta,
+                config=arch
+            )
+
+            scores.append({
+                **{f"{k}_test": v for k, v in results.items()},
+                "dataset": dataset,
+                "aggregator": aggregator,
+                "architecture_name": arch_name,
+                "trial_name": trial_name,
+                "checkpoint_dir": checkpoint_dir
+            })
 
         logger.info("-" * 60 + f"Worker finished {dataset}-{selection_metric}")
 
+    scores_df = pd.DataFrame(scores)
+
+
+    mean_scores_df = scores_df.drop(["trial_name", "checkpoint_dir"], axis=1) \
+            .groupby(["dataset", "aggregator", "architecture_name"], as_index=False, dropna=False) \
+            .agg(["mean", "std", "max", "min"])
+
+    mean_scores_df.columns = ["_".join(col) if col[1] else col[0] for col in mean_scores_df.columns]
+    
     best_archs_df = best_archs_df.merge(
-                        pd.DataFrame(scores), 
+                        mean_scores_df, 
                         on=["dataset", "aggregator", "architecture_name"]
                     ).sort_values("dataset")
+    
+    checkpoints_dir = []
+    for r in best_archs_df.iloc:
+        dataset = r["dataset"]
+        aggregator = r["aggregator"]
+        arch_name = r["architecture_name"]
+        selection_metric = r["selection_metric"]
+        selection_mode = r["selection_mode"]
+        search_metric_name = f"{selection_metric}_test_{selection_mode}"
+        search_metric_val = r[search_metric_name]
+        
+        checkpoint_dir = scores_df.query(
+                   "dataset==@dataset "
+                   "and aggregator==@aggregator "
+                   "and architecture_name==@arch_name "
+                   f"and {selection_metric}_test==@search_metric_val"
+            )["checkpoint_dir"].values
+        
+        checkpoints_dir.append(checkpoint_dir[0])
 
+    best_archs_df["checkpoint_dir"] = checkpoints_dir
+            
     logger.info("Saving scored architectures")
     best_archs_df.to_csv("selected_architectures.csv", index=False)        
 
