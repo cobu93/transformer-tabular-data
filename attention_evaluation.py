@@ -121,9 +121,10 @@ def extract_attention(
     checkpoint = skorch.callbacks.TrainEndCheckpoint(
         dirname=os.path.join(checkpoint_dir, "model")
     )
-    load_state = skorch.callbacks.LoadInitState(checkpoint)
-    model.callbacks = [load_state]
+    model.callbacks = None
+    checkpoint.initialize()
     model.initialize()
+    model.load_params(checkpoint=checkpoint.checkpoint_)
     model.module_.need_weights = True
 
     preds_iter = model.forward_iter({
