@@ -4,16 +4,22 @@ import json
 import pandas as pd
 import joblib
 import skorch
-from utils import training, log, attention, evaluating, processing
+from utils import log, attention, evaluating, processing, data as datalib
 
-from sklearn import linear_model, pipeline, neighbors, base, model_selection, tree, feature_selection
+from sklearn import (
+                    linear_model, 
+                    pipeline, 
+                    neighbors, 
+                    base, 
+                    model_selection, 
+                    tree, 
+                    feature_selection, 
+                    neural_network
+                )
 
 from config import (
     DATA_BASE_DIR,
-    OPTIMIZER,
-    BATCH_SIZE,
     CHECKPOINT_BASE_DIR,
-    DEVICE,
     FEATURE_SELECTION_K_FOLD,
     SEED
 )
@@ -25,36 +31,6 @@ logger = log.get_logger()
 Training on split function
 """
 
-def read_meta_csv(dirname, file_prefix):
-    dataset_file = os.path.join(dirname, f"{file_prefix}.csv")
-    meta_file = os.path.join(dirname, f"{file_prefix}.meta.json")
-    data = pd.read_csv(dataset_file)
-
-    with open(meta_file, "r") as f:
-        meta = json.load(f)
-
-    return data, meta
-
-def read_dataset(dataset):
-
-    datasets_dirname = os.path.join(DATA_BASE_DIR, dataset)
-    train_data, dataset_meta = read_meta_csv(datasets_dirname, "train")
-    train_indices = dataset_meta["df_indices"]
-    logger.info(f"Training size: {train_data.shape}")
-
-    test_data, test_dataset_meta = read_meta_csv(datasets_dirname, "test")
-    test_indices = test_dataset_meta["df_indices"]
-    logger.info(f"Test size: {test_data.shape}")
-
-    data = pd.concat([train_data, test_data], axis=0)
-    logger.info(f"Total size: {data.shape}")
-
-    logger.info("Sorting dataset as original")
-    indices = train_indices + test_indices
-    data.index = indices
-    data = data.sort_index()
-    
-    return data, dataset_meta
 
 def extract_attention(
         dataset,
@@ -73,146 +49,68 @@ def extract_attention(
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
-    logger.info(f"Loading preprocessor")
-    preprocessor = joblib.load(os.path.join(checkpoint_dir, "preprocessor.jl"))
-
-    logger.info("Reading data")
-
-    data, dataset_meta = read_dataset(dataset)
-    target_column = dataset_meta["target"]
-    n_numerical = dataset_meta["n_numerical"]
-    
-    features = data.drop(target_column, axis=1)
-    original_order = features.columns.values.tolist()
-    labels = data[target_column]
-    
-    logger.info("Preprocessing data")
-    X = preprocessor.transform(features)
-    y = labels.values
-
-    multiclass = len(dataset_meta["labels"]) > 2
-    
-    if multiclass:
-        y = y.astype(np.int64)
-    else:
-        y = y.astype(np.float32)
-
-
     if os.path.exists(attention_file):
         logger.info("Skipping extraction. Attention file exists.")
         with open(attention_file, "rb") as f:
             cum_attns = np.load(f)
         return cum_attns
 
-    logger.info("Building model")
-    model = training.build_default_model_from_configs(
-        config, 
-        dataset_meta,
-        None,
-        optimizer=OPTIMIZER,
-        device=DEVICE,
-        batch_size=BATCH_SIZE,
-        monitor_metric="valid_loss", 
-        max_epochs=1,
-        checkpoint_dir=os.path.join(checkpoint_dir, "ignore"),
+    cum_attns = attention.extract_attention(
+        dataset,
+        checkpoint_dir,
+        aggregator,
+        selection_metric,
+        config,
+        only_last=True
     )
-    
-    logger.info("Loading checkpoint")
-    checkpoint = skorch.callbacks.TrainEndCheckpoint(
-        dirname=os.path.join(checkpoint_dir, "model")
-    )
-    model.callbacks = None
-    checkpoint.initialize()
-    model.initialize()
-    model.load_params(checkpoint=checkpoint.checkpoint_)
-    model.module_.need_weights = True
 
-    preds_iter = model.forward_iter({
-            "x_numerical": X[:, :n_numerical].astype(np.float32),
-            "x_categorical": X[:, n_numerical:].astype(np.int32)
-        })
-    
-
-    n_instances, n_features = X.shape
-    n_features -= n_numerical if config["numerical_passthrough"] else 0
-    
-    if aggregator == "cls":
-        n_features += 1
-    
-    cum_attns = np.zeros((n_instances, n_features))
-
-    for i, preds in enumerate(preds_iter):
-        output, layer_outs, attn = preds
-        _, batch_cum_attn = attention.compute_std_attentions(attn, aggregator)
-        cum_attns[i * BATCH_SIZE: (i + 1) * BATCH_SIZE] = batch_cum_attn[-1]
-    
-    assert np.allclose(cum_attns.sum(axis=1), 1), "Something went wrong with attentions"
-
-    renormalize = False
-    if aggregator == "cls":
-        logger.info("The aggregator is CLS")
-        cum_attns = cum_attns[:, 1:]
-        renormalize=True
-
-    numerical_passthrough = config["numerical_passthrough"]
-    if numerical_passthrough:
-        logger.info("Numerical passthrough is True")
-        numerical_attention = np.ones((cum_attns.shape[0], n_numerical)) * cum_attns.max(axis=1, keepdims=True)
-        cum_attns = np.concatenate([numerical_attention, cum_attns], axis=1)
-        renormalize=True
-
-    if renormalize:
-        logger.info("Renormalizing")
-        cum_attns = cum_attns / cum_attns.sum(axis=1, keepdims=True) 
-
-    # At this point cum_attns has the numerical values first
-    # For correctly masking we need to re sort features as originally
-    
-    current_order = dataset_meta["numerical"] + dataset_meta["categorical"]
-    indices_sort = np.argsort(list(map(lambda x: original_order.index(x), current_order)))
-    cum_attns = cum_attns[:, indices_sort]
-    
     logger.info("Saving attention at " + data_dir)
     
     with open(attention_file, "wb") as f:
         np.save(f, cum_attns)
 
     return cum_attns
-    
-def get_fs_attention_mask(job, attn_selector): 
 
-    archs_file = os.path.join(DATA_BASE_DIR, "architectures.json")
-    logger.info(f"Reading architectures from {archs_file}")
-    architectures = None
-    with open(archs_file, "r") as f:
-        architectures = json.load(f)
+def caching_masking_wrapper(mask_fn, method_name, job, selector, attn_selector):
+
+    dataset = job["dataset"]
+
+    mask_base_dir = os.path.join(
+                CHECKPOINT_BASE_DIR, 
+                dataset, 
+                "feature_selection", 
+                method_name, 
+                str(attn_selector)
+            )
+
+    mask_checkpoint = os.path.join(mask_base_dir, "mask.npy")
+
+    if os.path.exists(mask_checkpoint):
+        with open(mask_checkpoint, "rb") as f:
+            mask = np.load(f)        
+    else:
+        mask = mask_fn(job, selector)
+        if not os.path.exists(mask_base_dir):
+            os.makedirs(mask_base_dir)
+
+        with open(mask_checkpoint, "wb") as f:
+            np.save(f, mask)
+
+    return mask
+
+def get_fs_attention_mask(job, attn_selector): 
 
     dataset = job["dataset"]
     aggregator = job["aggregator"]
-    arch_name = job["architecture_name"]
     selection_metric = job["selection_metric"]
     checkpoint_dir = job["checkpoint_dir"]
-    numerical_passthrough = job["numerical_passthrough"]
-
-    search_architectures = architectures.get("rnn" if aggregator == "rnn" else "regular", None)
-    
-    if not search_architectures:
-        logger.fatal("The architectures file is incorrect")
-        raise ValueError("The architectures file is incorrect")
-
-    logger.info(f"Running training")
-    logger.info(f"Appending dataset and aggregator to configurations")
-
-    arch = search_architectures[arch_name]
-    arch["dataset"] = dataset
-    arch["aggregator"] = aggregator
 
     cum_attn = extract_attention(
         dataset,
         checkpoint_dir,
         aggregator,
         selection_metric,
-        config=arch
+        config=None
     )
 
     attn_mask = attention.get_attention_mask(cum_attn, attn_selector)
@@ -222,7 +120,7 @@ def get_fs_attention_mask(job, attn_selector):
 def get_random_mask(job, s_features): 
 
     dataset = job["dataset"]
-    data, _ = read_dataset(dataset)
+    data, _ = datalib.read_dataset(dataset)
     n_instances, n_features = data.shape
     n_features -= 1
     features = np.random.choice(n_features, size=s_features, replace=False)
@@ -233,11 +131,22 @@ def get_random_mask(job, s_features):
 
     return mask
 
+def get_full_mask(job, s_features): 
+
+    dataset = job["dataset"]
+    data, _ = datalib.read_dataset(dataset)
+    n_instances, n_features = data.shape
+    n_features -= 1
+    mask = np.ones((n_instances, n_features))
+    mask = mask.astype(bool)
+
+    return mask
+
 def build_masker_from_model(model):
 
     def get_mask_from_model(job, s_features):
         dataset = job["dataset"]
-        data, dataset_meta = read_dataset(dataset)
+        data, dataset_meta = datalib.read_dataset(dataset)
         n_instances, n_features = data.shape
         target = dataset_meta["target"]
         indices = dataset_meta["df_indices"]
@@ -262,7 +171,7 @@ def build_masker_from_score(scorer_fn):
 
     def get_mask_from_score(job, s_features):
         dataset = job["dataset"]
-        data, dataset_meta = read_dataset(dataset)
+        data, dataset_meta = datalib.read_dataset(dataset)
         n_instances, n_features = data.shape
         target = dataset_meta["target"]
         indices = dataset_meta["df_indices"]
@@ -283,6 +192,24 @@ def build_masker_from_score(scorer_fn):
 
     return get_mask_from_score
 
+def get_fraction_features(mask):
+
+    n_instances, n_features = mask.shape
+    fraction_selected = mask.sum() / (n_instances * n_features)
+
+    n_features_selected = n_features
+    n_features_fraction_selected = 1.0
+
+    for i in range(1, n_features + 1):
+        if np.abs(i / n_features - fraction_selected) \
+            < np.abs(n_features_selected / n_features - fraction_selected):
+    
+            n_features_selected = i
+            n_features_fraction_selected = n_features_selected / n_features
+
+    # Return fraction, equivalent features, and real fraction
+    return fraction_selected, n_features_selected, n_features_fraction_selected
+
 def feature_selection_evaluation(
     dataset,
     mask,
@@ -293,9 +220,12 @@ def feature_selection_evaluation(
 
     data_dir = os.path.join(DATA_BASE_DIR, dataset, "attention")
     checkpoint_dir = os.path.join(CHECKPOINT_BASE_DIR, dataset, "feature_selection", ft_selection_name, str(attn_selector))
-
+    (real_fraction_masked, 
+     approx_features, 
+     approx_fraction_from_features) = get_fraction_features(mask)
+    
     logger.info("Reading data")
-    data, dataset_meta = read_dataset(dataset)
+    data, dataset_meta = datalib.read_dataset(dataset)
     
     target_column = dataset_meta["target"]
     features = data.drop(target_column, axis=1)
@@ -386,7 +316,14 @@ def feature_selection_evaluation(
         #    logger.info(f"\t{k}: {v}")
 
         scores = {
+            "dataset": dataset,
             "fold": s_name,
+            "selection_method": ft_selection_name,
+            "attention_selector": attn_selector,
+            "real_fraction_masked": real_fraction_masked, 
+            "approx_features_masked": approx_features, 
+            "fraction_from_features": approx_fraction_from_features,
+            "model": model_name,
             **scores
         }
 
@@ -411,18 +348,18 @@ def main():
         {"name": "f_classif", "mask_fn": build_masker_from_score(feature_selection.f_classif)}       
     ]
 
-    attn_selectors = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    # Do not include the 1.0
+    attn_selectors = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     models=[
         {"name":"KNN", "model": neighbors.KNeighborsClassifier()},
         {"name":"DT", "model": tree.DecisionTreeClassifier()},
         {"name":"LR", "model": linear_model.LogisticRegression()},
-        
+        {"name":"MLP", "model": neural_network.MLPClassifier()},
     ]
 
-    """
-    Retrieves the best architectures for each dataset depending on the optimization metrics
-    """
-    # Exports best dataset configuration
+    
+    # Retrieves the best architectures for each dataset 
+    # depending on the optimization metrics
     logger.info("Reading selected architectures")
     archs_file = "selected_architectures.csv"
     if not os.path.exists(archs_file):
@@ -430,110 +367,119 @@ def main():
     
     best_archs_df = pd.read_csv(archs_file)
     
+    # Extract the attention for required architectures
+    archs_file = os.path.join(DATA_BASE_DIR, "architectures.json")
+    logger.info(f"Reading architectures from {archs_file}")
+    architectures = None
+    with open(archs_file, "r") as f:
+        architectures = json.load(f)
+
+    for job in best_archs_df.iloc:
+
+        dataset = job["dataset"]
+        aggregator = job["aggregator"]
+        arch_name = job["architecture_name"]
+        selection_metric = job["selection_metric"]
+        checkpoint_dir = job["checkpoint_dir"]
+
+        search_architectures = architectures.get("rnn" if aggregator == "rnn" else "regular", None)
+        
+        if not search_architectures:
+            logger.fatal("The architectures file is incorrect")
+            raise ValueError("The architectures file is incorrect")
+        
+        arch = search_architectures[arch_name]
+        arch["dataset"] = dataset
+        arch["aggregator"] = aggregator
+
+        extract_attention(
+            dataset,
+            checkpoint_dir,
+            aggregator,
+            selection_metric,
+            config=arch
+        )
+
+    # Training full models, i.e., no feature selection applied
+    logger.info("=" * 40 + f" Training non-masked models")
     fs_scores = []
 
     for job in best_archs_df.iloc:
-        
-        dataset = job["dataset"]
-        selection_metric = job["selection_metric"]
 
-        logger.info("-" * 60 + f"Running worker {dataset}-{selection_metric}")
+        selection_metric = job["selection_metric"]
+        dataset = job["dataset"]
+        mask = get_full_mask(job, None)
+
+        logger.info(f"Dataset: {dataset}")
+
+        for m in models:
+            
+            cv_scores = feature_selection_evaluation(
+                dataset,
+                mask,
+                "none",
+                1.0,
+                m
+            )
+
+            for s in cv_scores:
+                fs_scores.append({
+                    "selection_metric": selection_metric,
+                    **s
+                })
+    
+    logger.info("=" * 40 + f" Training non-masked models finished")
+
+
+
+
+    logger.info("=" * 40 + f" Training masked models")
+    for job in best_archs_df.iloc:
+
+        selection_metric = job["selection_metric"]
+        dataset = job["dataset"]
+        logger.info(f"Dataset: {dataset}")
 
         for attn_s in attn_selectors:
-
-            attn_mask_base_dir = os.path.join(
-                CHECKPOINT_BASE_DIR, 
-                dataset, 
-                "feature_selection", 
-                f"attention/{selection_metric}", 
-                str(attn_s)
-            )
-
-            attn_mask_checkpoint = os.path.join(
-                attn_mask_base_dir,
-                "mask.npy"
-            )
-
-            # Executes attention masking
+            # From attention feature selection
+            logger.info("Extracting attention mask")
+            attn_mask = caching_masking_wrapper(get_fs_attention_mask, f"attention/{selection_metric}", job, attn_s, attn_s)
+            
+            (fraction_selected, 
+             n_features_selected, 
+             n_features_fraction_selected) = get_fraction_features(attn_mask)
+            
             logger.info(f"Attention selector: {attn_s}")
-            if os.path.exists(attn_mask_checkpoint):
-                logger.info("Loading existing mask")
-                with open(attn_mask_checkpoint, "rb") as f:
-                    attn_mask = np.load(f)
-            else:
-                logger.info("Creating and saving mask")
-                if not os.path.exists(attn_mask_base_dir):
-                    os.makedirs(attn_mask_base_dir)
-                attn_mask = get_fs_attention_mask(job, attn_s)
-                with open(attn_mask_checkpoint, "wb") as f:
-                    np.save(f, attn_mask)
-
-            n_instances, n_features = attn_mask.shape
-            fraction_selected = attn_mask.sum() / (n_instances * n_features)
-            logger.info(f"Fraction selected: {fraction_selected}")
-            n_features_selected = n_features
-            for i in range(1, n_features + 1):
-                if np.abs(i / n_features - fraction_selected) \
-                    < np.abs(n_features_selected / n_features - fraction_selected):
-                    n_features_selected = i
-
-            n_features_fraction_selected = n_features_selected / n_features
-
+            logger.info(f"Information masked: {fraction_selected}")
             logger.info(f"Equivalent features: {n_features_selected}")
-            logger.info(f"Equivalent fraction: {n_features_fraction_selected}")
+            logger.info(f"Information masked from feeatures: {n_features_fraction_selected}")
 
             for m in models:
-                logger.info("=" * 40 + f" Feature selection [attention/{selection_metric}][selector: {attn_s}][Model: {m['name']}]")
                 cv_scores = feature_selection_evaluation(
-                    dataset,
-                    attn_mask,
-                    f"attention/{selection_metric}",
-                    attn_s,
-                    m
-                )
-
+                        dataset,
+                        attn_mask,
+                        f"attention/{selection_metric}",
+                        attn_s,
+                        m
+                    )
+                
                 for s in cv_scores:
                     fs_scores.append({
-                        "dataset": dataset,
-                        "selection_method": "attention",
                         "selection_metric": selection_metric,
-                        "attention_selector": attn_s,
-                        "fraction_selected": fraction_selected,
-                        "features_selected": n_features_selected,
-                        "fraction_features_selected": n_features_fraction_selected,
-                        "model": m["name"],
                         **s
                     })
-
-                
+            
+            # From other feature selection
             for ft_selector in feature_selectors:
-                mask_base_dir = os.path.join(
-                    CHECKPOINT_BASE_DIR, 
-                    dataset, 
-                    "feature_selection", 
-                    ft_selector["name"], 
-                    str(attn_s)
-                )
-
-                mask_checkpoint = os.path.join(
-                    mask_base_dir,
-                    "mask.npy"
-                )
-
-                if os.path.exists(mask_checkpoint):
-                    logger.info("Loading existing mask")
-                    with open(mask_checkpoint, "rb") as f:
-                        mask = np.load(f)
-                else:
-                    logger.info("Creating and saving mask")
-                    if not os.path.exists(mask_base_dir):
-                        os.makedirs(mask_base_dir)
-                    mask = ft_selector["mask_fn"](job, n_features_selected) 
-                    with open(mask_checkpoint, "wb") as f:
-                        np.save(f, mask)
-
+                mask = caching_masking_wrapper(
+                            ft_selector["mask_fn"], 
+                            ft_selector["name"], 
+                            job, 
+                            n_features_selected,
+                            attn_s
+                        )
+                
                 for m in models:
-                    logger.info("=" * 40 + f" Feature selection [{ft_selector['name']}][selector: {n_features_selected}][Model: {m['name']}]")
                     cv_scores = feature_selection_evaluation(
                         dataset,
                         mask,
@@ -544,32 +490,27 @@ def main():
 
                     for s in cv_scores:
                         fs_scores.append({
-                            "dataset": dataset,
-                            "selection_method": ft_selector["name"],
                             "selection_metric": selection_metric,
-                            "attention_selector": attn_s,
-                            "fraction_selected": fraction_selected,
-                            "features_selected": n_features_selected,
-                            "fraction_features_selected": n_features_fraction_selected,
-                            "model": m["name"],
                             **s
                         })
 
-        logger.info("-" * 60 + f"Worker finished {dataset}-{selection_metric}")
-        logger.info("Saving feature selection scores")
+    logger.info("=" * 40 + f" Masked models finished")
 
-        fs_scores_df = pd.DataFrame(fs_scores)
-        fs_scores_df = fs_scores_df.drop(["fold"], axis=1).groupby([
-            "dataset", 
-            "selection_method", 
-            "selection_metric", 
-            "attention_selector",
-            "fraction_selected", 
-            "features_selected", 
-            "fraction_features_selected", 
-            "model"], as_index=False).agg(["mean", "std"])
-        fs_scores_df.columns = ["_".join(col) if col[1] else col[0] for col in fs_scores_df.columns]       
-        fs_scores_df.to_csv("feature_selection_scores.csv", index=False)
+    logger.info("Saving feature selection scores")
+
+    fs_scores_df = pd.DataFrame(fs_scores)
+    
+    fs_scores_df = fs_scores_df.drop(["fold"], axis=1).groupby([
+        "dataset", 
+        "selection_method", 
+        "selection_metric", 
+        "attention_selector",
+        "real_fraction_masked", 
+        "approx_features_masked", 
+        "fraction_from_features", 
+        "model"], as_index=False).agg(["mean", "std"])
+    fs_scores_df.columns = ["_".join(col) if col[1] else col[0] for col in fs_scores_df.columns]       
+    fs_scores_df.to_csv("feature_selection_scores.csv", index=False)
 
 
     

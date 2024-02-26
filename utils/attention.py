@@ -1,5 +1,12 @@
 import torch
 import numpy as np
+from config import DATA_BASE_DIR, OPTIMIZER, DEVICE, BATCH_SIZE
+import os
+import joblib
+from . import data, training, log
+import skorch
+
+logger = log.get_logger()
 
 def compute_std_attentions(attn, aggregator):
     batch_size = attn.shape[1]
@@ -42,16 +49,12 @@ def compute_std_attentions(attn, aggregator):
     # After: n_layers, batch_size, n_features
     return single_attns.permute((1, 0, 2)), cum_attns.permute((1, 0, 2))
 
+def get_attention_mask(attn_, selector, as_binary=True):
 
-def get_attention_mask(attn, selector, as_binary=True):
+    selection_mask = np.all(np.isnan(attn_), axis=0)
+    attn = attn_[:, ~selection_mask]
 
-    if selector >= 1:
-        full_attn = attn.copy()
-        if as_binary:
-            full_attn[:, :] = 1
-            full_attn = full_attn.astype(bool)
-
-        return full_attn
+    assert np.allclose(attn.sum(axis=1), 1), "The attention is incorrect"
 
     sorted_args = np.argsort(attn, axis=-1)[:, ::-1]
     inv_sorted_args = np.argsort(sorted_args, axis=-1)
@@ -61,9 +64,139 @@ def get_attention_mask(attn, selector, as_binary=True):
     sorted_attn[attn_cum_sum > selector] = 0
     sorted_attn = np.take_along_axis(sorted_attn, inv_sorted_args, axis=1)
 
-    
-    if as_binary:
-        sorted_attn[sorted_attn > 0] = 1
-        sorted_attn = sorted_attn.astype(bool)
+    attn_mask = attn_.copy()
+    attn_mask[:, ~selection_mask] = sorted_attn
+    attn_mask[:, selection_mask] = 1
 
-    return sorted_attn
+    if as_binary:
+        attn_mask[attn_mask > 0] = 1
+        attn_mask = attn_mask.astype(bool)
+
+    return attn_mask
+
+def extract_attention(
+        dataset,
+        checkpoint_dir,
+        aggregator,
+        selection_metric,
+        config, 
+        only_last=True,
+        return_cubes=False
+    ):
+    
+    run_name = f"{dataset}-{selection_metric}"
+    logger.info("+" * 40 + f" Extracting {run_name}")
+
+    logger.info(f"Loading preprocessor")
+    preprocessor = joblib.load(os.path.join(checkpoint_dir, "preprocessor.jl"))
+
+    logger.info("Reading data")
+
+    dataset_data, dataset_meta = data.read_dataset(dataset)
+    target_column = dataset_meta["target"]
+    n_numerical = dataset_meta["n_numerical"]
+    
+    features = dataset_data.drop(target_column, axis=1)
+    original_order = features.columns.values.tolist()
+    labels = dataset_data[target_column]
+    
+    logger.info("Preprocessing data")
+    X = preprocessor.transform(features)
+    y = labels.values
+
+    multiclass = len(dataset_meta["labels"]) > 2
+    
+    if multiclass:
+        y = y.astype(np.int64)
+    else:
+        y = y.astype(np.float32)
+
+    logger.info("Building model")
+    model = training.build_default_model_from_configs(
+        config, 
+        dataset_meta,
+        None,
+        optimizer=OPTIMIZER,
+        device=DEVICE,
+        batch_size=BATCH_SIZE,
+        monitor_metric="valid_loss", 
+        max_epochs=1,
+        checkpoint_dir=os.path.join(checkpoint_dir, "ignore"),
+    )
+    
+    logger.info("Loading checkpoint")
+    checkpoint = skorch.callbacks.TrainEndCheckpoint(
+        dirname=os.path.join(checkpoint_dir, "model")
+    )
+    model.callbacks = None
+    checkpoint.initialize()
+    model.initialize()
+    model.load_params(checkpoint=checkpoint.checkpoint_)
+    model.module_.need_weights = True
+
+    preds_iter = model.forward_iter({
+            "x_numerical": X[:, :n_numerical].astype(np.float32),
+            "x_categorical": X[:, n_numerical:].astype(np.int32)
+        })
+    
+
+    n_instances, n_features = X.shape
+    n_features -= n_numerical if config["numerical_passthrough"] else 0
+    n_heads = config["n_head"]
+
+    if only_last:
+        n_layers = 1
+    else:
+        n_layers = config["n_layers"]
+    
+    if aggregator == "cls":
+        n_features += 1
+    
+    cum_attns = np.zeros((n_layers, n_instances, n_features))
+
+    if return_cubes:
+        cubes_attns = np.zeros((n_layers, n_instances, n_heads, n_features, n_features))
+
+    for i, preds in enumerate(preds_iter):
+        output, layer_outs, attn = preds
+
+        if return_cubes:
+            cubes_attns[:, i * BATCH_SIZE: (i + 1) * BATCH_SIZE] = attn[-n_layers:]
+
+        _, batch_cum_attn = compute_std_attentions(attn, aggregator)
+        cum_attns[:, i * BATCH_SIZE: (i + 1) * BATCH_SIZE] = batch_cum_attn[-n_layers:]
+        
+    assert np.allclose(cum_attns.sum(axis=-1), 1), "Something went wrong with attentions"
+
+    if aggregator == "cls":
+        logger.info("The aggregator is CLS")
+        cum_attns = cum_attns[:, :, 1:]
+        # Re-normalizing
+        cum_attns = cum_attns / cum_attns.sum(axis=-1, keepdims=True)
+
+        if return_cubes:
+            raise NotImplementedError("CLS removal in attention cubes is not implemented")
+
+    numerical_passthrough = config["numerical_passthrough"]
+    if numerical_passthrough:
+        logger.info("Numerical passthrough is True")
+        numerical_attention = np.ones((n_layers, n_instances, n_numerical)) * np.nan
+        cum_attns = np.concatenate([numerical_attention, cum_attns], axis=-1)
+
+        if return_cubes:
+            raise NotImplementedError("Numerical passthrough in attention cubes is not implemented")
+
+    # At this point cum_attns has the numerical values first
+    # For correctly masking we need to re sort features as originally
+    
+    current_order = dataset_meta["numerical"] + dataset_meta["categorical"]
+    indices_sort = np.argsort(list(map(lambda x: original_order.index(x), current_order)))
+    cum_attns = cum_attns[:, :, indices_sort].squeeze()
+
+    if return_cubes:
+        cubes_attns = cubes_attns[:, :, :, :, indices_sort]
+        cubes_attns = cubes_attns[:, :, :, indices_sort]
+        return cum_attns, cubes_attns
+    
+    return cum_attns
+

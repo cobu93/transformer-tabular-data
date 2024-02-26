@@ -1,8 +1,12 @@
 import numpy as np
-from sklearn import model_selection
+import os
+import pandas as pd
 import openml
-import pickle as pkl
-import torch 
+import json 
+from config import DATA_BASE_DIR
+from . import log
+
+logger = log.get_logger()
 
 def read_dataset_by_id(
     id
@@ -54,3 +58,34 @@ def read_dataset_by_id(
         "numerical": numerical,
         "n_numerical": len(numerical)
     }
+
+def read_meta_csv(dirname, file_prefix):
+    dataset_file = os.path.join(dirname, f"{file_prefix}.csv")
+    meta_file = os.path.join(dirname, f"{file_prefix}.meta.json")
+    data = pd.read_csv(dataset_file)
+
+    with open(meta_file, "r") as f:
+        meta = json.load(f)
+
+    return data, meta
+
+def read_dataset(dataset):
+
+    datasets_dirname = os.path.join(DATA_BASE_DIR, dataset)
+    train_data, dataset_meta = read_meta_csv(datasets_dirname, "train")
+    train_indices = dataset_meta["df_indices"]
+    logger.info(f"Training size: {train_data.shape}")
+
+    test_data, test_dataset_meta = read_meta_csv(datasets_dirname, "test")
+    test_indices = test_dataset_meta["df_indices"]
+    logger.info(f"Test size: {test_data.shape}")
+
+    data = pd.concat([train_data, test_data], axis=0)
+    logger.info(f"Total size: {data.shape}")
+
+    logger.info("Sorting dataset as original")
+    indices = train_indices + test_indices
+    data.index = indices
+    data = data.sort_index()
+    
+    return data, dataset_meta
