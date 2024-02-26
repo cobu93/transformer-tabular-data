@@ -509,8 +509,26 @@ def main():
         "approx_features_masked", 
         "fraction_from_features", 
         "model"], as_index=False).agg(["mean", "std"])
-    fs_scores_df.columns = ["_".join(col) if col[1] else col[0] for col in fs_scores_df.columns]       
-    fs_scores_df.to_csv("feature_selection_scores.csv", index=False)
+    fs_scores_df.columns = ["_".join(col) if col[1] else col[0] for col in fs_scores_df.columns]  
+
+    fs_scores_com_df = fs_scores_df.copy()
+    fs_scores_com_df = fs_scores_com_df[fs_scores_com_df["selection_method"] != "none"]
+
+    for fs_method in fs_scores_df.query("selection_method != 'none'")["selection_method"].unique():
+        for metric in fs_scores_df["selection_metric"].unique():
+            for ds in fs_scores_df["dataset"].unique():
+                
+                insertion_df = fs_scores_df.query(
+                    "selection_method=='none' "
+                    "and selection_metric==@metric "
+                    "and dataset==@ds"
+                ) 
+                
+                insertion_df.loc[:, "selection_method"] = fs_method
+                
+                fs_scores_com_df = pd.concat([fs_scores_com_df, insertion_df])
+                    
+    fs_scores_com_df.to_csv("feature_selection_scores.csv", index=False)
 
 
     
