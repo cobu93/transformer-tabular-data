@@ -10,7 +10,7 @@ import json
 import pandas as pd
 import joblib
 import skorch
-from utils import training, processing, evaluating, reporting, callback
+from utils import training, processing, evaluating, reporting, callback, attention
 
 from config import (
     PROJECT_NAME,
@@ -21,7 +21,8 @@ from config import (
     REFIT_SELECTION_METRICS,
     BATCH_SIZE,
     DEVICE,
-    TEST_TRAININGS
+    TEST_TRAININGS,
+    MAX_EPOCHS
 )
 
 from utils import log
@@ -35,6 +36,78 @@ SCORING_GOAL = "minimize"
 SCORING = "valid_loss"
 
 
+def attn_entropy(net, ds, y=None):
+
+    net.module_.need_weights = True
+    preds_iter = net.forward_iter(ds)
+    aggregator = net.module_.aggregator
+
+    if "cls" in str(aggregator).lower():
+        aggregator = "cls"
+    else:
+        aggregator = "other"
+
+    cum_attns = []
+
+    for i, preds in enumerate(preds_iter):
+        _, _, attn = preds
+        _, batch_cum_attn = attention.compute_std_attentions(attn, aggregator)
+        cum_attns.append(batch_cum_attn[-1])
+
+    net.module_.need_weights = False
+
+    cum_attns = np.concatenate(cum_attns, axis=0)
+ 
+    assert np.allclose(cum_attns.sum(axis=-1), 1), "Something went wrong with attentions"
+
+    mean_entropy = -(cum_attns * np.log(cum_attns)).sum(axis=-1).mean()
+    return float(mean_entropy)
+
+def build_train_loss_diff(metric_name, metric_mode, dataset, aggregator, architecture_name, std_diff_factor=2.5):
+
+    cv_folder = os.path.join(CHECKPOINT_BASE_DIR, dataset, aggregator, architecture_name)
+    metric_name = metric_name if "loss" not in metric_name else "valid_loss"
+    
+    metric_values = []
+    train_loss_values = []
+
+    for fold_name in os.listdir(cv_folder):
+        with open(os.path.join(cv_folder, fold_name, "model", "valid_loss", "history.json")) as f:
+            history = json.load(f)
+
+        # Get the metric in of all epochs (for validation)
+        cv_metric_values = [e[metric_name] for e in history]
+
+        # Get the epoch where the best metric was registered
+        if metric_mode == "min":
+            cv_metric_epoch = np.argmin(cv_metric_values)
+        else:
+            cv_metric_epoch = np.argmax(cv_metric_values)
+
+        # Get the train loss of that epoch
+        train_loss_value = history[cv_metric_epoch]["train_loss"]
+        metric_value = history[cv_metric_epoch][metric_name]
+        train_loss_values.append(train_loss_value)
+        metric_values.append(metric_value)
+
+    train_loss_mean = float(np.mean(train_loss_values))
+    train_loss_std = float(np.std(train_loss_values))
+    train_loss_searched = max(train_loss_mean - std_diff_factor * train_loss_std, 1e-5)
+
+    metric_mean = float(np.mean(metric_values))
+    metric_std = float(np.std(metric_values))
+
+    logger.info(f"Metric values [{metric_name}]: {metric_mean} +- {metric_std}")
+    logger.info(f"Expected train loss: {train_loss_mean} +- {train_loss_std}")
+    logger.info(f"Train loss searched: {train_loss_mean} - {std_diff_factor} * {train_loss_std}")
+    logger.info(f"Train loss searched: {train_loss_searched}")
+    
+    def train_loss_diff(net, ds, y=None):
+        last_metric = net.history[-1, "train_loss"]
+        return abs(train_loss_searched - last_metric)
+
+    return train_loss_diff
+
 """
 Training on split function
 """
@@ -44,6 +117,7 @@ def refit(
         aggregator,
         architecture_name, 
         selection_metric,
+        selection_mode,
         trial_name,
         dataset_meta,
         config,
@@ -114,23 +188,6 @@ def refit(
     joblib.dump(preprocessor, os.path.join(checkpoint_dir, "preprocessor.jl"))
 
 
-    logger.info(f"Computing max epochs + {extra_epochs_part * 100}%")
-    cv_folder = os.path.join(CHECKPOINT_BASE_DIR, dataset, aggregator, architecture_name)
-
-    n_epochs = []
-
-    for fold_name in os.listdir(cv_folder):
-        with open(os.path.join(cv_folder, fold_name, "model", "valid_loss", "history.json")) as f:
-            history = json.load(f)
-        n_epochs.append(len(history))
-
-    n_epochs = np.max(n_epochs)
-    logger.info(f"Max epochs: {n_epochs}")
-    n_epochs *= (1 + extra_epochs_part)
-    n_epochs = int(np.ceil(n_epochs))
-    logger.info(f"Final epochs: {n_epochs}")
-    
-    
     logger.info("Building model")
     model = training.build_default_model_from_configs(
         config, 
@@ -140,16 +197,47 @@ def refit(
         device=DEVICE,
         batch_size=BATCH_SIZE,
         monitor_metric=SCORING, 
-        max_epochs=n_epochs,
+        max_epochs=MAX_EPOCHS,
         checkpoint_dir=os.path.join(checkpoint_dir, "ignore"),
     )
 
     model_checkpoint_path = os.path.join(checkpoint_dir, "model")
-    model_checkpoint = [(f"checkpoint", skorch.callbacks.TrainEndCheckpoint(
+    other_callbacks = [
+        ("attn_entropy", 
+                skorch.callbacks.EpochScoring(
+                    attn_entropy, 
+                    name="attn_entropy",
+                    lower_is_better=True, 
+                    use_caching=False,
+                    on_train=True
+        )),
+        (f"{selection_metric}_diff", 
+                skorch.callbacks.EpochScoring(
+                    build_train_loss_diff(
+                        selection_metric, 
+                        selection_mode, 
+                        dataset, 
+                        aggregator, 
+                        architecture_name
+                    ), 
+                    name=f"train_loss_diff", 
+                    lower_is_better=True, 
+                    use_caching=False,
+                    on_train=True
+        )),
+        (f"checkpoint", skorch.callbacks.Checkpoint(
+                    monitor=f"train_loss_diff_best",
+                    load_best=True,
                     dirname=model_checkpoint_path
-                    ))]
+        )),
+        (f"early_stopping", skorch.callbacks.EarlyStopping(
+                    monitor=f"train_loss_diff", 
+                    patience=int(0.1 * MAX_EPOCHS)
+        ))      
+    ]
 
-    model.callbacks = callback.get_default_callbacks(multiclass=multiclass) + model_checkpoint
+
+    model.callbacks = callback.get_default_callbacks(multiclass=multiclass) + other_callbacks
     
     logger.info("Training model")
     model = model.fit(X={
@@ -247,10 +335,11 @@ def main():
     logger.info(f"Total architectures: {len(best_archs_df)}")
     best_archs_df = best_archs_df.dropna(subset=[f"{m['metric']}_mean" for m in REFIT_SELECTION_METRICS])
     logger.info(f"After removing nan: {len(best_archs_df)}")
-    best_archs_df_unique = best_archs_df \
-                                .drop_duplicates(subset=["dataset", "aggregator", "architecture_name"]) \
-                                .sort_values("dataset")
-    logger.info(f"There are {len(best_archs_df)} unique architectures to train")
+    best_archs_df = best_archs_df.sort_values("dataset")
+    #best_archs_df_unique = best_archs_df \
+    #                            .drop_duplicates(subset=["dataset", "aggregator", "architecture_name"]) \
+    #                            .sort_values("dataset")
+    #logger.info(f"There are {len(best_archs_df)} unique architectures to train")
 
     archs_file = os.path.join(DATA_BASE_DIR, "architectures.json")
     logger.info(f"Reading architectures from {archs_file}")
@@ -258,16 +347,17 @@ def main():
     with open(archs_file, "r") as f:
         architectures = json.load(f)
 
-    logger.info("Thebest architectures are:")
-    logger.info(str(best_archs_df_unique))
+    logger.info("The best architectures are:")
+    logger.info(str(best_archs_df))
 
     scores = []
-    for job in best_archs_df_unique.iloc:
+    for job in best_archs_df.iloc:
 
         dataset = job["dataset"]
         aggregator = job["aggregator"]
         arch_name = job["architecture_name"]
         selection_metric = job["selection_metric"]
+        selection_mode = job["selection_mode"]
 
         logger.info("-" * 60 + f"Running worker {dataset}-{selection_metric}")
        
@@ -298,6 +388,7 @@ def main():
                 aggregator,
                 arch_name,
                 selection_metric,
+                selection_mode,
                 trial_name,
                 dataset_meta,
                 config=arch
@@ -308,6 +399,8 @@ def main():
                 "dataset": dataset,
                 "aggregator": aggregator,
                 "architecture_name": arch_name,
+                "selection_metric": selection_metric,
+                "selection_mode": selection_mode,
                 "trial_name": trial_name,
                 "checkpoint_dir": checkpoint_dir
             })
@@ -316,16 +409,15 @@ def main():
 
     scores_df = pd.DataFrame(scores)
 
-
     mean_scores_df = scores_df.drop(["trial_name", "checkpoint_dir"], axis=1) \
-            .groupby(["dataset", "aggregator", "architecture_name"], as_index=False, dropna=False) \
+            .groupby(["dataset", "aggregator", "architecture_name", "selection_metric", "selection_mode"], as_index=False, dropna=False) \
             .agg(["mean", "std", "max", "min"])
 
     mean_scores_df.columns = ["_".join(col) if col[1] else col[0] for col in mean_scores_df.columns]
     
     best_archs_df = best_archs_df.merge(
                         mean_scores_df, 
-                        on=["dataset", "aggregator", "architecture_name"]
+                        on=["dataset", "aggregator", "architecture_name", "selection_metric", "selection_mode"]
                     ).sort_values("dataset")
     
     checkpoints_dir = []
