@@ -14,12 +14,14 @@ from sklearn import (
                     model_selection, 
                     tree, 
                     feature_selection, 
-                    neural_network
+                    neural_network,
+                    cluster
                 )
 
 from config import (
     DATA_BASE_DIR,
     CHECKPOINT_BASE_DIR,
+    FEATURE_SELECTION_N_CLUSTERS,
     FEATURE_SELECTION_K_FOLD,
     SEED
 )
@@ -27,51 +29,7 @@ from config import (
 logger = log.get_logger()
 
 
-"""
-Training on split function
-"""
-
-
-def extract_attention(
-        dataset,
-        checkpoint_dir,
-        aggregator,
-        selection_metric,
-        config
-    ):
-    
-    run_name = f"{dataset}-{selection_metric}"
-    logger.info("+" * 40 + f" Extracting {run_name}")
-
-    data_dir = os.path.join(DATA_BASE_DIR, dataset, "attention", selection_metric)
-    attention_file = os.path.join(data_dir, "attention.npy")
-        
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
-
-    if os.path.exists(attention_file):
-        logger.info("Skipping extraction. Attention file exists.")
-        with open(attention_file, "rb") as f:
-            cum_attns = np.load(f)
-        return cum_attns
-
-    cum_attns = attention.extract_attention(
-        dataset,
-        checkpoint_dir,
-        aggregator,
-        selection_metric,
-        config,
-        only_last=True
-    )
-
-    logger.info("Saving attention at " + data_dir)
-    
-    with open(attention_file, "wb") as f:
-        np.save(f, cum_attns)
-
-    return cum_attns
-
-def caching_masking_wrapper(mask_fn, method_name, job, selector, attn_selector):
+def caching_masking_wrapper(mask_fn, method_name, job, selector):
 
     dataset = job["dataset"]
 
@@ -80,7 +38,7 @@ def caching_masking_wrapper(mask_fn, method_name, job, selector, attn_selector):
                 dataset, 
                 "feature_selection", 
                 method_name, 
-                str(attn_selector)
+                str(selector)
             )
 
     mask_checkpoint = os.path.join(mask_base_dir, "mask.npy")
@@ -98,60 +56,43 @@ def caching_masking_wrapper(mask_fn, method_name, job, selector, attn_selector):
 
     return mask
 
-def get_fs_attention_mask(job, attn_selector): 
+def get_attention_mask(data, labels, attention, dataset_meta, feature_selector): 
 
-    dataset = job["dataset"]
-    aggregator = job["aggregator"]
-    selection_metric = job["selection_metric"]
-    checkpoint_dir = job["checkpoint_dir"]
-
-    cum_attn = extract_attention(
-        dataset,
-        checkpoint_dir,
-        aggregator,
-        selection_metric,
-        config=None
-    )
-
-    attn_mask = attention.get_attention_mask(cum_attn, attn_selector)
-
-    return attn_mask
-
-def get_random_mask(job, s_features): 
-
-    dataset = job["dataset"]
-    data, _ = datalib.read_dataset(dataset)
-    n_instances, n_features = data.shape
-    n_features -= 1
-    features = np.random.choice(n_features, size=s_features, replace=False)
-    assert len(features) == s_features, "Bad mask generation"
-    mask = np.zeros((n_instances, n_features))
-    mask[:, features] = 1
+    attn = attention.copy()
+    is_nan_indices = np.isnan(attn)
+    attn[is_nan_indices] = 0
+    assert np.allclose(attn.sum(axis=1), 1), "The attention is incorrect"
+    attn[is_nan_indices] = 1
+    attn = attn.mean(axis=0)
+    sorted_args = np.argsort(attn)[::-1]
+    mask = np.zeros(attn.shape[0])
+    mask[sorted_args[:feature_selector]] = 1
     mask = mask.astype(bool)
 
     return mask
 
-def get_full_mask(job, s_features): 
+def get_random_mask(data, labels, attention, dataset_meta, feature_selector): 
 
-    dataset = job["dataset"]
-    data, _ = datalib.read_dataset(dataset)
     n_instances, n_features = data.shape
-    n_features -= 1
-    mask = np.ones((n_instances, n_features))
+    features = np.random.choice(n_features, size=feature_selector, replace=False)
+    assert len(features) == feature_selector, "Bad mask generation"
+    mask = np.zeros(n_features)
+    mask[features] = 1
+    mask = mask.astype(bool)
+
+    return mask
+
+def get_full_mask(data, labels, attention, dataset_meta, feature_selector): 
+
+    n_instances, n_features = data.shape
+    mask = np.ones(n_features)
     mask = mask.astype(bool)
 
     return mask
 
 def build_masker_from_model(model):
 
-    def get_mask_from_model(job, s_features):
-        dataset = job["dataset"]
-        data, dataset_meta = datalib.read_dataset(dataset)
-        n_instances, n_features = data.shape
-        target = dataset_meta["target"]
-        indices = dataset_meta["df_indices"]
-        train_data = data.drop(target, axis=1).loc[indices]
-        train_labels = data[target].loc[indices]
+    def get_mask_from_model(data, labels, attention, dataset_meta, feature_selector):
         
         preprocessor = processing.get_preprocessor(
             dataset_meta["categorical"],
@@ -159,24 +100,17 @@ def build_masker_from_model(model):
             dataset_meta["categories"],
         )
 
-        train_data = preprocessor.fit_transform(train_data)
-        selector = feature_selection.SelectFromModel(model, max_features=s_features, threshold=-np.inf)
-        selector = selector.fit(train_data, train_labels)
-        mask = np.repeat(selector.get_support()[None, :], n_instances, axis=0)
+        data = preprocessor.fit_transform(data)
+        selector = feature_selection.SelectFromModel(model, max_features=feature_selector, threshold=-np.inf)
+        selector = selector.fit(data, labels)
+        mask = selector.get_support()
         return mask
 
     return get_mask_from_model
 
 def build_masker_from_score(scorer_fn):
 
-    def get_mask_from_score(job, s_features):
-        dataset = job["dataset"]
-        data, dataset_meta = datalib.read_dataset(dataset)
-        n_instances, n_features = data.shape
-        target = dataset_meta["target"]
-        indices = dataset_meta["df_indices"]
-        train_data = data.drop(target, axis=1).loc[indices]
-        train_labels = data[target].loc[indices]
+    def get_mask_from_score(data, labels, attention, dataset_meta, feature_selector):
         
         preprocessor = processing.get_preprocessor(
             dataset_meta["categorical"],
@@ -184,150 +118,142 @@ def build_masker_from_score(scorer_fn):
             dataset_meta["categories"],
         )
 
-        train_data = preprocessor.fit_transform(train_data)
-        selector = feature_selection.SelectKBest(scorer_fn, k=s_features)
-        selector = selector.fit(train_data, train_labels)
-        mask = np.repeat(selector.get_support()[None, :], n_instances, axis=0)
+        data = preprocessor.fit_transform(data)
+        selector = feature_selection.SelectKBest(scorer_fn, k=feature_selector)
+        selector = selector.fit(data, labels)
+        mask = selector.get_support()
         return mask
 
     return get_mask_from_score
 
-def get_fraction_features(mask):
-
-    n_instances, n_features = mask.shape
-    fraction_selected = mask.sum() / (n_instances * n_features)
-
-    n_features_selected = n_features
-    n_features_fraction_selected = 1.0
-
-    for i in range(1, n_features + 1):
-        if np.abs(i / n_features - fraction_selected) \
-            < np.abs(n_features_selected / n_features - fraction_selected):
-    
-            n_features_selected = i
-            n_features_fraction_selected = n_features_selected / n_features
-
-    # Return fraction, equivalent features, and real fraction
-    return fraction_selected, n_features_selected, n_features_fraction_selected
-
 def feature_selection_evaluation(
     dataset,
-    mask,
-    ft_selection_name,
-    attn_selector,
+    mask_info,
+    opt_metric,
+    features_percent,
     model
     ):
 
-    data_dir = os.path.join(DATA_BASE_DIR, dataset, "attention")
-    checkpoint_dir = os.path.join(CHECKPOINT_BASE_DIR, dataset, "feature_selection", ft_selection_name, str(attn_selector))
-    (real_fraction_masked, 
-     approx_features, 
-     approx_fraction_from_features) = get_fraction_features(mask)
+    model_runner = model["model"]
+    model_name = model["name"]
+
+    ft_selection_name = mask_info["name"]
+    mask_fn = mask_info["mask_fn"]
+
+    data_dir = os.path.join(DATA_BASE_DIR, dataset, "feature_selection", opt_metric)
+    checkpoint_dir = os.path.join(
+                        CHECKPOINT_BASE_DIR, dataset, "feature_selection", opt_metric, 
+                        ft_selection_name, str(features_percent), model_name
+                    )
     
     logger.info("Reading data")
-    data, dataset_meta = datalib.read_dataset(dataset)
     
+    # Reading feature info
+    with open(os.path.join(data_dir, "feature_selection_info.json"), "r") as f:
+        fs_info = json.load(f)
+
+    # Reading data
+    data, dataset_meta = datalib.read_dataset(dataset)
+    data.index = np.argsort(fs_info["data_required_sort"])
+    data = data.sort_index()
     target_column = dataset_meta["target"]
     features = data.drop(target_column, axis=1)
     labels = data[target_column]
     multiclass = len(dataset_meta["labels"]) > 2
 
-    cv_file = os.path.join(data_dir, "cross_validation.json")
-    if os.path.exists(cv_file):
-        logger.info("Reading splits")
-        with open(cv_file, "r") as f:
-            cv_info = json.load(f)
-    else:
-        logger.info("Creating splits")
-        splitter = model_selection.StratifiedKFold(n_splits=FEATURE_SELECTION_K_FOLD, shuffle=True, random_state=SEED)
-        k_splits = {}
-        for i, (train_indices, val_indices) in enumerate(splitter.split(features, labels)):
+    # Reading attention
+    with open(os.path.join(data_dir, "attention.npy"), "rb") as f:
+        attn = np.load(f)
 
-            assert np.max(train_indices) < features.shape[0], "Indices are not correct"
-            assert np.max(val_indices) < features.shape[0], "Indices are not correct"
+    assert np.array_equal(labels, fs_info["labels"]), "Something went wrong sorting data"
 
-            k_splits[f"F{i}"] = {
-                "train": train_indices.tolist(),
-                "val": val_indices.tolist(),
+    eval_data = []
+    
+    for c_name, c_process in fs_info["cluster_processes"].items():
+
+        if not c_process["processable"]:
+            continue
+
+        s_idx = c_process["start_index"]
+        e_idx = c_process["end_index"]
+        splits = c_process["splits"]
+
+        c_features = features.loc[s_idx:e_idx]
+        c_labels = labels.loc[s_idx:e_idx]
+        c_attn = attn[s_idx:e_idx]
+
+        for f_name, f_indices in splits.items():
+
+            clf_checkpoint = os.path.join(checkpoint_dir, model_name, c_name, f_name)
+        
+            if not os.path.exists(clf_checkpoint):
+                os.makedirs(clf_checkpoint)
+
+            scores_checkpoint = os.path.join(clf_checkpoint, "scores.json")
+            n_features_selected = int(features_percent * c_features.shape[1])
+
+            if not os.path.exists(scores_checkpoint):
+                logger.info(f"Training {c_name}:{f_name}")
+                
+                train_indices = f_indices["train"] 
+                val_indices = f_indices["val"] 
+
+                mask = mask_fn(
+                            c_features.iloc[train_indices],
+                            c_labels.iloc[train_indices],
+                            c_attn[train_indices],
+                            dataset_meta,
+                            n_features_selected
+                        )
+                
+                assert mask.sum() == n_features_selected, "Something went wrong generating the mask"
+                
+                selected_columns = c_features.columns[mask]
+
+                clf = pipeline.make_pipeline(
+                    processing.get_regular_preprocessor(
+                        [c for c in dataset_meta["categorical"] if c in selected_columns],
+                        [c for c in dataset_meta["numerical"] if c in selected_columns],
+                        { k: v for k, v in dataset_meta["categories"].items() if k in selected_columns}
+                    ),
+                    model_runner
+                )
+
+                clf = clf.fit(
+                    c_features.iloc[train_indices][selected_columns],
+                    c_labels.iloc[train_indices]
+                )
+
+                joblib.dump(clf, os.path.join(clf_checkpoint, "model.jl"))
+
+                preds = clf.predict(c_features.iloc[val_indices][selected_columns])
+
+                scores = evaluating.get_default_feature_selection_scores(
+                    c_labels.iloc[val_indices], preds, multiclass=True
+                )
+
+                with open(scores_checkpoint, "w") as f:
+                    json.dump(scores, f, indent=4)
+                
+            else:
+                logger.info(f"Skipping {c_name}:{f_name}")
+                with open(scores_checkpoint, "r") as f:
+                    scores = json.load(f)
+
+            
+            scores = {
+                "dataset": dataset,
+                "cluster": c_name,
+                "fold": f_name,
+                "model": model_name,
+                "selection_method": ft_selection_name,
+                "opt_metric": opt_metric,
+                "n_features_selected": n_features_selected,
+                "features_percent": features_percent,
+                **scores
             }
 
-        cv_info = {"splits": k_splits}
-        with open(cv_file, "w") as f:
-            json.dump(cv_info, f, indent=4)
-    
-        
-    mask_df = pd.DataFrame(data=mask, columns=features.columns)
-    features = features[mask_df]
-
-    model_runner = model["model"]
-    model_name = model["name"]
-        
-    general_clf = pipeline.make_pipeline(
-        processing.get_regular_preprocessor(
-            dataset_meta["categorical"],
-            dataset_meta["numerical"],
-            dataset_meta["categories"],
-        ),
-        model_runner
-    )
-    
-    eval_data = []
-
-    for s_name, s_indices in cv_info["splits"].items():
-        logger.info(f"Fold: {s_name}")
-
-        clf_checkpoint = os.path.join(
-                            checkpoint_dir,
-                            model_name,
-                            s_name
-                            )
-        
-        if not os.path.exists(clf_checkpoint):
-            os.makedirs(clf_checkpoint)
-
-        scores_checkpoint = os.path.join(clf_checkpoint, "scores.json")
-
-        if not os.path.exists(scores_checkpoint):
-        
-            clf = base.clone(general_clf)
-
-            clf = clf.fit(
-                features.loc[s_indices["train"]],
-                labels.loc[s_indices["train"]]
-            )
-
-            joblib.dump(clf, os.path.join(clf_checkpoint, "model.jl"))
-
-            preds = clf.predict(features.loc[s_indices["val"]])
-
-            scores = evaluating.get_default_feature_selection_scores(
-                labels[s_indices["val"]], preds, multiclass=multiclass
-            )
-
-            with open(scores_checkpoint, "w") as f:
-                json.dump(scores, f, indent=4)
-
-        else:
-            logger.info("Skipping because it was trained before")
-            with open(scores_checkpoint, "r") as f:
-                scores = json.load(f)
-
-        # for k, v in scores.items():
-        #    logger.info(f"\t{k}: {v}")
-
-        scores = {
-            "dataset": dataset,
-            "fold": s_name,
-            "selection_method": ft_selection_name,
-            "attention_selector": attn_selector,
-            "real_fraction_masked": real_fraction_masked, 
-            "approx_features_masked": approx_features, 
-            "fraction_from_features": approx_fraction_from_features,
-            "model": model_name,
-            **scores
-        }
-
-        eval_data.append(scores)
+            eval_data.append(scores)
 
     return eval_data
                 
@@ -341,7 +267,8 @@ Defines the main data flow, it includes:
 """
 def main():
 
-    feature_selectors = [
+    mask_generators = [
+        {"name": "attention", "mask_fn": get_attention_mask},
         {"name": "random", "mask_fn": get_random_mask},
         {"name": "linear_model", "mask_fn": build_masker_from_model(linear_model.LogisticRegression())},
         {"name": "decision_tree", "mask_fn": build_masker_from_model(tree.DecisionTreeClassifier())},
@@ -349,7 +276,7 @@ def main():
     ]
 
     # Do not include the 1.0
-    attn_selectors = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    ft_percent_selectors = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     models=[
         {"name":"KNN", "model": neighbors.KNeighborsClassifier()},
         {"name":"DT", "model": tree.DecisionTreeClassifier()},
@@ -367,13 +294,14 @@ def main():
     
     best_archs_df = pd.read_csv(archs_file)
     
-    # Extract the attention for required architectures
+    # Extract the attention for required architectures and cluster it
     archs_file = os.path.join(DATA_BASE_DIR, "architectures.json")
     logger.info(f"Reading architectures from {archs_file}")
     architectures = None
     with open(archs_file, "r") as f:
         architectures = json.load(f)
 
+    
     for job in best_archs_df.iloc:
 
         dataset = job["dataset"]
@@ -392,13 +320,84 @@ def main():
         arch["dataset"] = dataset
         arch["aggregator"] = aggregator
 
-        extract_attention(
-            dataset,
-            checkpoint_dir,
-            aggregator,
-            selection_metric,
-            config=arch
-        )
+        attention_dir = os.path.join(DATA_BASE_DIR, dataset, "feature_selection", selection_metric)
+        attention_file = os.path.join(attention_dir, "attention.npy")
+        attention_info_file = os.path.join(attention_dir, "feature_selection_info.json")
+
+        if not os.path.exists(attention_dir):
+            os.makedirs(attention_dir)
+
+        if not (os.path.exists(attention_file) and os.path.exists(attention_info_file)):
+
+            result = attention.extract_attention(
+                dataset,
+                checkpoint_dir,
+                aggregator,
+                selection_metric,
+                config=arch,
+                return_labels=True
+            )
+
+            attn = result["cumulated_attention"]
+            labels = result["labels"]
+
+            nan_indices = np.isnan(attn)
+            attn[nan_indices] = -1
+
+            cluster_algo = cluster.KMeans(n_clusters=FEATURE_SELECTION_N_CLUSTERS, random_state=SEED)
+            cluster_labels = cluster_algo.fit_predict(attn)
+            attn[nan_indices] = np.nan
+
+            indices = np.lexsort((labels, cluster_labels))
+            attn = attn[indices]
+            labels = labels[indices]
+            cluster_labels = cluster_labels[indices]
+
+            attn_info = {
+                "data_required_sort": indices.tolist(),
+                "labels": labels.tolist(),
+                "cluster_labels": cluster_labels.tolist(),
+                "cluster_processes": {}
+            }
+
+            # Validate at least two classes per cluster
+            cluster_uniques, clusters_indices = np.unique(cluster_labels, return_index=True)
+            clusters_indices = np.array(clusters_indices.tolist() + [cluster_labels.shape[0]])
+            
+            for c_l, c_l_start, c_l_end in zip(cluster_uniques, clusters_indices[:-1], clusters_indices[1:]):
+                existing_labels = np.unique(labels[c_l_start:c_l_end])
+                processable = len(existing_labels) >= 2
+
+                splits = {}
+
+                if processable:
+                    skf = model_selection.StratifiedKFold(
+                        n_splits=FEATURE_SELECTION_K_FOLD, 
+                        random_state=SEED, 
+                        shuffle=True
+                    )
+
+                    for i, (train_index, val_index) in \
+                        enumerate(skf.split(attn[c_l_start:c_l_end], labels[c_l_start:c_l_end])):
+
+                        splits[f"F{i}"] = {
+                            "train": train_index.tolist(),
+                            "val": val_index.tolist()
+                        }
+
+
+                attn_info["cluster_processes"][f"C{c_l}"] = {
+                    "processable": processable,
+                    "start_index": int(c_l_start),
+                    "end_index": int(c_l_end),
+                    "splits": splits
+                }
+
+            with open(attention_file, "wb") as f:
+                np.save(f, attn)
+            
+            with open(attention_info_file, "w") as f:
+                json.dump(attn_info, f, indent=4)
 
     # Training full models, i.e., no feature selection applied
     logger.info("=" * 40 + f" Training non-masked models")
@@ -408,31 +407,23 @@ def main():
 
         selection_metric = job["selection_metric"]
         dataset = job["dataset"]
-        mask = get_full_mask(job, None)
-
         logger.info(f"Dataset: {dataset}")
 
         for m in models:
             
             cv_scores = feature_selection_evaluation(
                 dataset,
-                mask,
-                "none",
+                {"name": "none", "mask_fn": get_full_mask},
+                selection_metric,
                 1.0,
                 m
             )
 
-            for s in cv_scores:
-                fs_scores.append({
-                    "selection_metric": selection_metric,
-                    **s
-                })
+            fs_scores.extend(cv_scores)
     
     logger.info("=" * 40 + f" Training non-masked models finished")
 
-
-
-
+    
     logger.info("=" * 40 + f" Training masked models")
     for job in best_archs_df.iloc:
 
@@ -440,87 +431,47 @@ def main():
         dataset = job["dataset"]
         logger.info(f"Dataset: {dataset}")
 
-        for attn_s in attn_selectors:
-            # From attention feature selection
-            logger.info("Extracting attention mask")
-            attn_mask = caching_masking_wrapper(get_fs_attention_mask, f"attention/{selection_metric}", job, attn_s, attn_s)
-            
-            (fraction_selected, 
-             n_features_selected, 
-             n_features_fraction_selected) = get_fraction_features(attn_mask)
-            
-            logger.info(f"Attention selector: {attn_s}")
-            logger.info(f"Information masked: {fraction_selected}")
-            logger.info(f"Equivalent features: {n_features_selected}")
-            logger.info(f"Information masked from feeatures: {n_features_fraction_selected}")
-
-            for m in models:
-                cv_scores = feature_selection_evaluation(
-                        dataset,
-                        attn_mask,
-                        f"attention/{selection_metric}",
-                        attn_s,
-                        m
-                    )
-                
-                for s in cv_scores:
-                    fs_scores.append({
-                        "selection_metric": selection_metric,
-                        **s
-                    })
-            
-            # From other feature selection
-            for ft_selector in feature_selectors:
-                mask = caching_masking_wrapper(
-                            ft_selector["mask_fn"], 
-                            ft_selector["name"], 
-                            job, 
-                            n_features_selected,
-                            attn_s
-                        )
-                
+        for ft_p_selector in ft_percent_selectors:
+            for mask_gen in mask_generators:
                 for m in models:
                     cv_scores = feature_selection_evaluation(
-                        dataset,
-                        mask,
-                        ft_selector["name"],
-                        attn_s,
-                        m
-                    )
-
-                    for s in cv_scores:
-                        fs_scores.append({
-                            "selection_metric": selection_metric,
-                            **s
-                        })
+                            dataset,
+                            mask_gen,
+                            selection_metric,
+                            ft_p_selector,
+                            m
+                        )
+                    
+                    fs_scores.extend(cv_scores)
 
     logger.info("=" * 40 + f" Masked models finished")
 
     logger.info("Saving feature selection scores")
 
     fs_scores_df = pd.DataFrame(fs_scores)
-    
+
     fs_scores_df = fs_scores_df.drop(["fold"], axis=1).groupby([
         "dataset", 
-        "selection_method", 
-        "selection_metric", 
-        "attention_selector",
-        "real_fraction_masked", 
-        "approx_features_masked", 
-        "fraction_from_features", 
-        "model"], as_index=False).agg(["mean", "std"])
+        "cluster", 
+        "model", 
+        "selection_method",
+        "opt_metric", 
+        "n_features_selected",
+        "features_percent"
+        ], as_index=False).agg(["mean", "std"])
+
     fs_scores_df.columns = ["_".join(col) if col[1] else col[0] for col in fs_scores_df.columns]  
 
     fs_scores_com_df = fs_scores_df.copy()
     fs_scores_com_df = fs_scores_com_df[fs_scores_com_df["selection_method"] != "none"]
 
     for fs_method in fs_scores_df.query("selection_method != 'none'")["selection_method"].unique():
-        for metric in fs_scores_df["selection_metric"].unique():
+        for metric in fs_scores_df["opt_metric"].unique():
             for ds in fs_scores_df["dataset"].unique():
                 
                 insertion_df = fs_scores_df.query(
                     "selection_method=='none' "
-                    "and selection_metric==@metric "
+                    "and opt_metric==@metric "
                     "and dataset==@ds"
                 ) 
                 

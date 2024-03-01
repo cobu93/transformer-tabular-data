@@ -63,50 +63,6 @@ def attn_entropy(net, ds, y=None):
     mean_entropy = -(cum_attns * np.log(cum_attns)).sum(axis=-1).mean()
     return float(mean_entropy)
 
-def build_train_loss_diff(metric_name, metric_mode, dataset, aggregator, architecture_name, std_diff_factor=2.5):
-
-    cv_folder = os.path.join(CHECKPOINT_BASE_DIR, dataset, aggregator, architecture_name)
-    metric_name = metric_name if "loss" not in metric_name else "valid_loss"
-    
-    metric_values = []
-    train_loss_values = []
-
-    for fold_name in os.listdir(cv_folder):
-        with open(os.path.join(cv_folder, fold_name, "model", "valid_loss", "history.json")) as f:
-            history = json.load(f)
-
-        # Get the metric in of all epochs (for validation)
-        cv_metric_values = [e[metric_name] for e in history]
-
-        # Get the epoch where the best metric was registered
-        if metric_mode == "min":
-            cv_metric_epoch = np.argmin(cv_metric_values)
-        else:
-            cv_metric_epoch = np.argmax(cv_metric_values)
-
-        # Get the train loss of that epoch
-        train_loss_value = history[cv_metric_epoch]["train_loss"]
-        metric_value = history[cv_metric_epoch][metric_name]
-        train_loss_values.append(train_loss_value)
-        metric_values.append(metric_value)
-
-    train_loss_mean = float(np.mean(train_loss_values))
-    train_loss_std = float(np.std(train_loss_values))
-    train_loss_searched = max(train_loss_mean - std_diff_factor * train_loss_std, 1e-5)
-
-    metric_mean = float(np.mean(metric_values))
-    metric_std = float(np.std(metric_values))
-
-    logger.info(f"Metric values [{metric_name}]: {metric_mean} +- {metric_std}")
-    logger.info(f"Expected train loss: {train_loss_mean} +- {train_loss_std}")
-    logger.info(f"Train loss searched: {train_loss_mean} - {std_diff_factor} * {train_loss_std}")
-    logger.info(f"Train loss searched: {train_loss_searched}")
-    
-    def train_loss_diff(net, ds, y=None):
-        last_metric = net.history[-1, "train_loss"]
-        return abs(train_loss_searched - last_metric)
-
-    return train_loss_diff
 
 """
 Training on split function
@@ -122,7 +78,7 @@ def refit(
         dataset_meta,
         config,
         best_tag="best",
-        extra_epochs_part=0.2 # With 100% for training / 5 = 20%, then with 20% extra data, we train 20% more
+        n_epochs=40 # With 100% for training / 5 = 20%, then with 20% extra data, we train 20% more
     ):
     
     run_name = f"{dataset}-{best_tag}-{selection_metric}-{trial_name}"
@@ -197,7 +153,7 @@ def refit(
         device=DEVICE,
         batch_size=BATCH_SIZE,
         monitor_metric=SCORING, 
-        max_epochs=MAX_EPOCHS,
+        max_epochs=n_epochs,
         checkpoint_dir=os.path.join(checkpoint_dir, "ignore"),
     )
 
@@ -211,28 +167,8 @@ def refit(
                     use_caching=False,
                     on_train=True
         )),
-        (f"{selection_metric}_diff", 
-                skorch.callbacks.EpochScoring(
-                    build_train_loss_diff(
-                        selection_metric, 
-                        selection_mode, 
-                        dataset, 
-                        aggregator, 
-                        architecture_name
-                    ), 
-                    name=f"train_loss_diff", 
-                    lower_is_better=True, 
-                    use_caching=False,
-                    on_train=True
-        )),
-        (f"checkpoint", skorch.callbacks.Checkpoint(
-                    monitor=f"train_loss_diff_best",
-                    load_best=True,
+        (f"checkpoint", skorch.callbacks.TrainEndCheckpoint(
                     dirname=model_checkpoint_path
-        )),
-        (f"early_stopping", skorch.callbacks.EarlyStopping(
-                    monitor=f"train_loss_diff", 
-                    patience=int(0.1 * MAX_EPOCHS)
         ))      
     ]
 

@@ -49,31 +49,6 @@ def compute_std_attentions(attn, aggregator):
     # After: n_layers, batch_size, n_features
     return single_attns.permute((1, 0, 2)), cum_attns.permute((1, 0, 2))
 
-def get_attention_mask(attn_, selector, as_binary=True):
-
-    selection_mask = np.all(np.isnan(attn_), axis=0)
-    attn = attn_[:, ~selection_mask]
-
-    assert np.allclose(attn.sum(axis=1), 1), "The attention is incorrect"
-
-    sorted_args = np.argsort(attn, axis=-1)[:, ::-1]
-    inv_sorted_args = np.argsort(sorted_args, axis=-1)
-    sorted_attn = np.take_along_axis(attn, sorted_args, axis=1)
-
-    attn_cum_sum = sorted_attn.cumsum(axis=-1)
-    sorted_attn[attn_cum_sum > selector] = 0
-    sorted_attn = np.take_along_axis(sorted_attn, inv_sorted_args, axis=1)
-
-    attn_mask = attn_.copy()
-    attn_mask[:, ~selection_mask] = sorted_attn
-    attn_mask[:, selection_mask] = 1
-
-    if as_binary:
-        attn_mask[attn_mask > 0] = 1
-        attn_mask = attn_mask.astype(bool)
-
-    return attn_mask
-
 def extract_attention(
         dataset,
         checkpoint_dir,
@@ -81,7 +56,8 @@ def extract_attention(
         selection_metric,
         config, 
         only_last=True,
-        return_cubes=False
+        return_cubes=False,
+        return_labels=False
     ):
     
     run_name = f"{dataset}-{selection_metric}"
@@ -125,9 +101,10 @@ def extract_attention(
     )
     
     logger.info("Loading checkpoint")
-    checkpoint = skorch.callbacks.Checkpoint(
+    checkpoint = skorch.callbacks.TrainEndCheckpoint(
         dirname=os.path.join(checkpoint_dir, "model")
-    )
+    ).initialize().checkpoint_
+
     model.callbacks = None
     model.initialize()
     model.load_params(checkpoint=checkpoint)
@@ -192,10 +169,16 @@ def extract_attention(
     indices_sort = np.argsort(list(map(lambda x: original_order.index(x), current_order)))
     cum_attns = cum_attns[:, :, indices_sort].squeeze()
 
+    ret_vals = {"cumulated_attention": cum_attns}
+
+    if return_labels:
+        ret_vals["labels"] = y
+
     if return_cubes:
         cubes_attns = cubes_attns[:, :, :, :, indices_sort]
         cubes_attns = cubes_attns[:, :, :, indices_sort]
-        return cum_attns, cubes_attns
+        ret_vals["attention_cubes"] = cubes_attns
+        
     
-    return cum_attns
+    return ret_vals
 
