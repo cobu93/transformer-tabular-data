@@ -276,7 +276,7 @@ def main():
     ]
 
     # Do not include the 1.0
-    ft_percent_selectors = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    ft_percent_selectors = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     models=[
         {"name":"KNN", "model": neighbors.KNeighborsClassifier()},
         {"name":"DT", "model": tree.DecisionTreeClassifier()},

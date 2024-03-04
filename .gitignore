@@ -2,6 +2,7 @@ __pycache__
 .ipynb_checkpoints
 data/*/*.csv
 data/*/feature_selection
+data/*/feature_selection_instance
 checkpoint
 wandb
 tabtransformer
