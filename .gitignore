@@ -1,11 +1,10 @@
 __pycache__
 .ipynb_checkpoints
 data/*/*.csv
-data/*/feature_selection
-data/*/feature_selection_instance
+data/*/feature_selection*
 checkpoint
 wandb
 tabtransformer
 fttransformer
 *.tar.xz
-assets/
+assets_o

@@ -92,9 +92,6 @@ OPTIMIZER = torch.optim.AdamW
 
 REFIT_SELECTION_METRICS = [
                             {
-                                "metric": "balanced_accuracy",
-                                "mode": "max"
-                            },{
                                 "metric": "log_loss",
                                 "mode": "min"
                             }
@@ -105,6 +102,26 @@ Reporting variables
 
 ASSETS_DIR = "assets"
 TEST_TRAININGS = 5
-FEATURE_SELECTION_N_CLUSTERS = 4
+FEATURE_SELECTION_N_CLUSTERS = {
+                                "adult": [3, 4, 2, 5, 6],
+                                "anneal": [3, 4, 2, 5, 6],
+                                "australian": [3, 4, 2, 5, 6],
+                                "jasmine": [3, 4, 2, 5, 6],
+                                "kr-vs-kp": [3, 4, 2, 5, 6],
+                                "sylvine": [3, 4, 2, 5, 6],
+                                "volkert": [3, 4, 2, 5, 6],
+                            }
+
+# Based on the observations of clusters
+FEATURE_SELECTION_N_CLUSTERS = {
+                                "adult": [4],
+                                "anneal": [2, 4, 3],
+                                "australian": [2, 3],
+                                "jasmine": [4, 2, 6],
+                                "kr-vs-kp": [2, 4],
+                                "sylvine": [2, 4, 3],
+                                "volkert": [2, 4, 3],
+                            }
+
 FEATURE_SELECTION_K_FOLD = 10
 
