@@ -28,6 +28,136 @@ from config import (
 
 logger = log.get_logger()
 
+def get_best_attn_cluster(
+    attn,
+    labels,
+    cluster_options=[2, 4],
+    max_times_entropy=1.0,
+    predominant_dataset_proportion=0.9    
+    ):
+    
+    cluster_labels = None
+    c_l_start = 0
+    c_l_end = 0
+    c_l = 0
+    cluster_found = False
+
+    bf_cluster_labels = None
+    bf_c_l_start = 0
+    bf_c_l_end = 0
+    bf_c_l = 0
+
+
+    # Test with each n-clustering option
+    for n_cluster_test in cluster_options:
+        logger.info(f"Test using {n_cluster_test} clusters")
+
+        #Clustering
+        cluster_algo = cluster.KMeans(n_clusters=n_cluster_test, random_state=SEED)
+        cluster_labels = cluster_algo.fit_predict(attn)
+
+        indices = np.lexsort((labels, cluster_labels))
+        t_attn = attn[indices]
+        t_labels = labels[indices]
+        t_cluster_labels = cluster_labels[indices]
+
+        cluster_uniques, clusters_indices = np.unique(t_cluster_labels, return_index=True)
+        clusters_indices = np.array(clusters_indices.tolist() + [cluster_labels.shape[0]])
+
+        two_classes_min = np.zeros(cluster_uniques.shape[0]).astype(bool)
+        entropy_proportion = np.zeros(cluster_uniques.shape[0]).astype(bool)
+        label_dominance = np.zeros(cluster_uniques.shape[0]).astype(bool) 
+        feasible_clusters = np.zeros(cluster_uniques.shape[0]).astype(bool) 
+        clusters_entropy = np.zeros(cluster_uniques.shape[0])
+
+        # Test each cluster
+        for c_l, c_l_start, c_l_end in zip(cluster_uniques, clusters_indices[:-1], clusters_indices[1:]):
+            
+            processable = True
+            # Mean cluster entropy
+            cluster_entropy = t_attn[c_l_start:c_l_end] * np.log(t_attn[c_l_start:c_l_end])
+            cluster_entropy = -cluster_entropy.sum(axis=-1).mean()
+            clusters_entropy[c_l] = cluster_entropy
+            
+            # Validate entropy proportion
+            entropy_proportion[c_l] = bool(cluster_entropy <= max_times_entropy * -np.log(1 / t_attn.shape[-1]))
+            processable = processable and entropy_proportion[c_l]
+
+            # Non predominant class
+            c_labels = t_labels[c_l_start:c_l_end]
+            existing_labels = np.unique(c_labels)
+            # At least two classes
+            two_classes_min[c_l] = len(existing_labels) >= 2
+            processable = processable and two_classes_min[c_l]
+            # The most dominant class is lower than 70% of total 
+            label_dominance[c_l] = True
+            for e_c in existing_labels:   
+                fraction_dataset = c_labels[c_labels == e_c].shape[0] / c_labels.shape[0]
+                label_dominance[c_l] = label_dominance[c_l] and (fraction_dataset <= predominant_dataset_proportion)
+            
+            processable = processable and label_dominance[c_l]
+            feasible_clusters[c_l] = processable
+
+        logger.info(f"Clusters summary:")
+        logger.info(f"\tEntropies:\t{clusters_entropy}")
+        logger.info(f"\t2 classes:\t{two_classes_min}")
+        logger.info(f"\t% entropy:\t{entropy_proportion}")
+        logger.info(f"\t% labels:\t{label_dominance}")
+        logger.info("-" * 40)
+        logger.info(f"\tFeasible:\t{feasible_clusters}")
+        
+            
+        # If at least one is processable
+        if not feasible_clusters.sum() >= 1:
+            logger.info(f"Non feasible cluster with {n_cluster_test} cluster")
+            continue
+
+        # If at least one cluster is feasible
+        # Select the cluster with lower entropy
+        prefered_cluster = np.argsort(clusters_entropy)
+        logger.info(f"Prefered cluster: {prefered_cluster}")
+
+        if not feasible_clusters[prefered_cluster[0]]:
+            logger.info("Prefered cluster is not feasible")
+
+            if bf_cluster_labels is None:
+                logger.info("Saving first feasible if any found")
+                for p_c in prefered_cluster:
+                    if feasible_clusters[p_c]:
+                        bf_cluster = p_c
+                        break
+
+                bf_cluster_labels = cluster_labels.copy()
+                bf_c_l_start = clusters_indices[bf_cluster]
+                bf_c_l_end = clusters_indices[bf_cluster + 1]
+                bf_c_l = cluster_uniques[bf_cluster]
+
+            continue
+
+        prefered_cluster = prefered_cluster[0]
+        cluster_found = True
+
+        c_l_start = clusters_indices[prefered_cluster]
+        c_l_end = clusters_indices[prefered_cluster + 1]
+        c_l = cluster_uniques[prefered_cluster]
+
+        break
+        
+    if not cluster_found:
+        logger.warning("Any cluster was feasible. Taking best found.")
+        cluster_labels = bf_cluster_labels
+        c_l_start = bf_c_l_start
+        c_l_end = bf_c_l_end
+        c_l = bf_c_l
+        
+    return dict(
+            cluster_labels=cluster_labels, 
+            selected_start_idx=c_l_start, 
+            selected_end_idx=c_l_end, 
+            selected_cluster_label=c_l,
+            is_best=cluster_found 
+            )
+
 def get_map_features_ohe(data, dataset_meta):
 
     original_order = data.columns.values.tolist()
@@ -192,7 +322,8 @@ def feature_selection_evaluation(
     mask_info,
     opt_metric,
     features_percent,
-    model
+    model,
+    experiment_name="feature_selection"
     ):
 
     model_runner = model["model"]
@@ -202,9 +333,9 @@ def feature_selection_evaluation(
     mask_fn = mask_info["mask_fn"]
     mask_level = mask_info["level"].lower().strip()
 
-    data_dir = os.path.join(DATA_BASE_DIR, dataset, "feature_selection", opt_metric)
+    data_dir = os.path.join(DATA_BASE_DIR, dataset, experiment_name, opt_metric)
     checkpoint_dir = os.path.join(
-                        CHECKPOINT_BASE_DIR, dataset, "feature_selection", opt_metric, 
+                        CHECKPOINT_BASE_DIR, dataset, experiment_name, opt_metric, 
                         ft_selection_name, str(features_percent), model_name
                     )
     
@@ -457,104 +588,21 @@ def main():
             nan_indices = np.isnan(attn)
             attn[nan_indices] = -1
 
-            cluster_labels = None
-            c_l_start = 0
-            c_l_end = 0
-            c_l = 0
-            cluster_found = False
-
-            bf_cluster_labels = None
-            bf_c_l_start = 0
-            bf_c_l_end = 0
-            bf_c_l = 0
-            
-
-            # Test with each n-clustering option
-            for n_cluster_test in FEATURE_SELECTION_N_CLUSTERS[dataset]:
-                logger.info(f"Test using {n_cluster_test} clusters")
-                
-                cluster_algo = cluster.KMeans(n_clusters=n_cluster_test, random_state=SEED)
-                cluster_labels = cluster_algo.fit_predict(attn)
-
-                indices = np.lexsort((labels, cluster_labels))
-                t_attn = attn[indices]
-                t_labels = labels[indices]
-                cluster_labels = cluster_labels[indices]
-
-                cluster_uniques, clusters_indices = np.unique(cluster_labels, return_index=True)
-                clusters_indices = np.array(clusters_indices.tolist() + [cluster_labels.shape[0]])
-
-                feasible_clusters = np.zeros(cluster_uniques.shape[0]).astype(bool)
-                clusters_entropy = np.zeros(cluster_uniques.shape[0])
-                
-                # Test each cluster
-                for c_l, c_l_start, c_l_end in zip(cluster_uniques, clusters_indices[:-1], clusters_indices[1:]):
-                    processable = True
-                    # Mean cluster entropy
-                    cluster_entropy = t_attn[c_l_start:c_l_end] * np.log(t_attn[c_l_start:c_l_end])
-                    cluster_entropy = -cluster_entropy.sum(axis=-1).mean()
-                    clusters_entropy[c_l] = cluster_entropy
-
-                    processable = processable and bool(cluster_entropy <= 0.7 * np.log(1 / t_attn.shape[-1]))
-
-                    # Non predominant class
-                    c_labels = t_labels[c_l_start:c_l_end]
-                    existing_labels = np.unique(c_labels)
-                    # At least two classes
-                    processable = len(existing_labels) >= 2
-                    # The most dominant class is lower than 70% of total 
-                    for e_c in existing_labels:   
-                        fraction_dataset = c_labels[c_labels == e_c].shape[0] / c_labels.shape[0]
-                        processable = processable and (fraction_dataset <= 0.7)
-
-                    feasible_clusters[c_l] = processable
-
-                # If at least one is processable
-                if not feasible_clusters.sum() >= 1:
-                    logger.info(f"Non feasible cluster with {n_cluster_test} cluster")
-                    continue
-
-                # Select the cluster with lower entropy
-                logger.info(f"Entropies: {clusters_entropy}")
-                logger.info(f"Feasible: {feasible_clusters}")
-                prefered_cluster = np.argsort(clusters_entropy)
-                logger.info(f"Prefered cluster: {prefered_cluster}")
-
-                if not feasible_clusters[prefered_cluster[0]]:
-                    logger.info("Prefered cluster is not feasible")
-
-                    if bf_cluster_labels is None:
-                        logger.info("Saving if any found")
-                        for p_c in prefered_cluster:
-                            if feasible_clusters[p_c]:
-                                bf_cluster = p_c
-                                break
-
-                        bf_cluster_labels = cluster_labels.copy()
-                        bf_c_l_start = clusters_indices[bf_cluster]
-                        bf_c_l_end = clusters_indices[bf_cluster + 1]
-                        bf_c_l = cluster_uniques[bf_cluster]
-                    
-                    continue
-
-                prefered_cluster = prefered_cluster[0]
-                cluster_found = True
-                
-                c_l_start = clusters_indices[prefered_cluster]
-                c_l_end = clusters_indices[prefered_cluster + 1]
-                c_l = cluster_uniques[prefered_cluster]
-
-                break
-
-            if not cluster_found:
-                logger.warning("Any cluster was feasible. Taking best found.")
-                cluster_labels = bf_cluster_labels
-                c_l_start = bf_c_l_start
-                c_l_end = bf_c_l_end
-                c_l = bf_c_l
-
+            attn_cluster_info = get_best_attn_cluster(
+                attn,
+                labels,
+                cluster_options=FEATURE_SELECTION_N_CLUSTERS[dataset],
+                max_times_entropy=1.0,
+                predominant_dataset_proportion=0.75
+            )
 
             attn[nan_indices] = np.nan
+
+            cluster_labels = attn_cluster_info["cluster_labels"]
+            c_l = attn_cluster_info["selected_cluster_label"]
+            c_l_start = attn_cluster_info["selected_start_idx"]
+            c_l_end = attn_cluster_info["selected_end_idx"]
+            cluster_found = attn_cluster_info["is_best"]
 
             indices = np.lexsort((labels, cluster_labels))
             attn = attn[indices]
@@ -598,7 +646,7 @@ def main():
             with open(attention_info_file, "w") as f:
                 json.dump(attn_info, f, indent=4)
 
-        
+     
     # Training full models, i.e., no feature selection applied
     logger.info("=" * 40 + f" Training non-masked models")
     fs_scores = []
