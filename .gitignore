@@ -1,8 +1,12 @@
+# Ignore
 __pycache__
 .ipynb_checkpoints
-data/*/*.csv
-data/*/feature_selection*
-checkpoint
+data/**/*.csv
+data/**/*.npy
+checkpoint/**/*.pt
+checkpoint/**/*history.json
+checkpoint/**/*.jl
+
 wandb
 tabtransformer
 fttransformer
