@@ -1,0 +1,7 @@
+{
+    "valid_loss": {
+        "balanced_accuracy": 0.53061177744752,
+        "accuracy": 0.7732115100276756,
+        "log_loss": 0.6704601593826054
+    }
+}
