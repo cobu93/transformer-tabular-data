@@ -19,13 +19,14 @@ from config import (
     SEED
 )
 
-from attention_evaluation import (
+from attention_evaluation_cluster import (
         get_attention_mask,
         get_full_mask,
         build_masker_from_model,
         build_masker_from_score,
         get_random_mask,
-        feature_selection_evaluation
+        feature_selection_evaluation,
+        get_attn_clusters_info
 )
 
 logger = log.get_logger()
@@ -38,6 +39,8 @@ Defines the main data flow, it includes:
 """
 def main():
 
+    experiment_name = "feature_selection_dataset"
+
     mask_generators = [
         {"name": "random", "mask_fn": get_random_mask, "level": "dataset"},
         {"name": "random_1", "mask_fn": get_random_mask, "level": "dataset"},
@@ -45,18 +48,18 @@ def main():
         {"name": "random_3", "mask_fn": get_random_mask, "level": "dataset"},
         {"name": "random_4", "mask_fn": get_random_mask, "level": "dataset"},
         {"name": "attention", "mask_fn": get_attention_mask, "level": "cluster"},
-        {"name": "linear_model", "mask_fn": build_masker_from_model(linear_model.LogisticRegression()), "level": "dataset"},
-        {"name": "decision_tree", "mask_fn": build_masker_from_model(tree.DecisionTreeClassifier()), "level": "dataset"},
+        {"name": "linear_model", "mask_fn": build_masker_from_model(linear_model.LogisticRegression(random_state=SEED)), "level": "dataset"},
+        {"name": "decision_tree", "mask_fn": build_masker_from_model(tree.DecisionTreeClassifier(random_state=SEED)), "level": "dataset"},
         {"name": "f_classif", "mask_fn": build_masker_from_score(feature_selection.f_classif), "level": "dataset"}       
     ]
 
     # Do not include the 1.0
-    ft_percent_selectors = [0.1, 0.2, 0.3]
+    ft_percent_selectors = [0.1]
     models=[
         {"name":"KNN", "model": neighbors.KNeighborsClassifier()},
-        {"name":"DT", "model": tree.DecisionTreeClassifier()},
-        {"name":"LR", "model": linear_model.LogisticRegression()},
-        {"name":"MLP", "model": neural_network.MLPClassifier()},
+        #{"name":"DT", "model": tree.DecisionTreeClassifier(random_state=SEED)},
+        #{"name":"LR", "model": linear_model.LogisticRegression(random_state=SEED)},
+        {"name":"MLP", "model": neural_network.MLPClassifier(random_state=SEED)},
     ]
 
     
@@ -94,7 +97,7 @@ def main():
         arch["dataset"] = dataset
         arch["aggregator"] = aggregator
 
-        attention_dir = os.path.join(DATA_BASE_DIR, dataset, "feature_selection_dataset", selection_metric)
+        attention_dir = os.path.join(DATA_BASE_DIR, dataset, experiment_name, selection_metric)
         attention_file = os.path.join(attention_dir, "attention.npy")
         attention_info_file = os.path.join(attention_dir, "feature_selection_info.json")
 
@@ -118,65 +121,52 @@ def main():
             nan_indices = np.isnan(attn)
             attn[nan_indices] = -1
 
-            attn_cluster_info = {
-                "cluster_labels": np.zeros(len(labels)).astype(int),
-                "selected_cluster_label": 0,
-                "selected_start_idx": 0,
-                "selected_end_idx": len(labels),
-                "is_best": False
-            }
-
-            attn[nan_indices] = np.nan
-
-            cluster_labels = attn_cluster_info["cluster_labels"]
-            c_l = attn_cluster_info["selected_cluster_label"]
-            c_l_start = attn_cluster_info["selected_start_idx"]
-            c_l_end = attn_cluster_info["selected_end_idx"]
-            cluster_found = attn_cluster_info["is_best"]
-
-            indices = np.lexsort((labels, cluster_labels))
-            attn = attn[indices]
-            labels = labels[indices]
-            cluster_labels = cluster_labels[indices]
-
-            attn_info = {
-                "data_required_sort": indices.tolist(),
-                "labels": labels.tolist(),
-                "cluster_labels": cluster_labels.tolist(),
-            }
-
-            splits = {}
-
-            skf = model_selection.StratifiedKFold(
-                n_splits=FEATURE_SELECTION_K_FOLD, 
-                random_state=SEED, 
-                shuffle=True
+            attn_cluster_info = get_attn_clusters_info(
+                attn.copy(),
+                labels.copy(),
+                n_clusters=1
             )
 
-            for i, (train_index, val_index) in \
-                enumerate(skf.split(attn[c_l_start:c_l_end], labels[c_l_start:c_l_end])):
+            cluster_labels = attn_cluster_info["cluster_labels"]
+            indices = attn_cluster_info["data_required_sort"]
+            attn = attn[indices]
+            labels = labels[indices]
+            attn_cluster_info["labels"] = labels.tolist()
 
-                splits[f"F{i}"] = {
-                    "train": train_index.tolist(),
-                    "val": val_index.tolist()
-                }
+            for t_cluster in attn_cluster_info["clusters"]:
+                feasible = len(t_cluster["classification_labels"]) >= 2
+                t_cluster["feasible"] = bool(feasible)
+                if not feasible:
+                    logger.warning(f"Classification not feasible {dataset}:C{t_cluster['label']}")
+                    continue
 
+                c_l_start = t_cluster["start_index"]
+                c_l_end = t_cluster["end_index"]
+                splits = {}
 
-            attn_info["process"] = {
-                "best_found": bool(cluster_found),
-                "cluster": int(c_l),
-                "start_index": int(c_l_start),
-                "end_index": int(c_l_end),
-                "splits": splits
-            }
+                skf = model_selection.StratifiedKFold(
+                    n_splits=FEATURE_SELECTION_K_FOLD, 
+                    random_state=SEED, 
+                    shuffle=True
+                )
+
+                for i, (train_index, val_index) in \
+                    enumerate(skf.split(attn[c_l_start:c_l_end], labels[c_l_start:c_l_end])):
+
+                    splits[f"F{i}"] = {
+                        "train": train_index.tolist(),
+                        "val": val_index.tolist()
+                    }
+
+                t_cluster["splits"] = splits
 
             with open(attention_file, "wb") as f:
                 np.save(f, attn)
             
             with open(attention_info_file, "w") as f:
-                json.dump(attn_info, f, indent=4)
+                json.dump(attn_cluster_info, f, indent=4)
 
-     
+    
     # Training full models, i.e., no feature selection applied
     logger.info("=" * 40 + f" Training non-masked models")
     fs_scores = []
@@ -195,14 +185,14 @@ def main():
                 selection_metric,
                 1.0,
                 m,
-                experiment_name="feature_selection_dataset"
+                experiment_name=experiment_name
             )
 
             fs_scores.extend(cv_scores)
     
     logger.info("=" * 40 + f" Training non-masked models finished")
     
-    
+
     logger.info("=" * 40 + f" Training masked models")
     for job in best_archs_df.iloc:
 
@@ -219,7 +209,7 @@ def main():
                             selection_metric,
                             ft_p_selector,
                             m,
-                            experiment_name="feature_selection_dataset"
+                            experiment_name=experiment_name
                         )
                     
                     fs_scores.extend(cv_scores)
@@ -259,12 +249,7 @@ def main():
                 
                 fs_scores_com_df = pd.concat([fs_scores_com_df, insertion_df])
                     
-    fs_scores_com_df.to_csv("feature_selection_dataset_scores.csv", index=False)
-
-
-    
-
-            
+    fs_scores_com_df.to_csv(f"{experiment_name}_scores.csv", index=False)
 
 
 if __name__ == "__main__":
