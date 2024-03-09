@@ -39,18 +39,18 @@ Defines the main data flow, it includes:
 """
 def main():
 
-    experiment_name = "feature_selection_dataset"
+    experiment_name = "feature_selection_dataset_fmask"
 
     mask_generators = [
-        {"name": "random", "mask_fn": get_random_mask, "level": "dataset"},
-        {"name": "random_1", "mask_fn": get_random_mask, "level": "dataset"},
-        {"name": "random_2", "mask_fn": get_random_mask, "level": "dataset"},
-        {"name": "random_3", "mask_fn": get_random_mask, "level": "dataset"},
-        {"name": "random_4", "mask_fn": get_random_mask, "level": "dataset"},
-        {"name": "attention", "mask_fn": get_attention_mask, "level": "cluster"},
-        {"name": "linear_model", "mask_fn": build_masker_from_model(linear_model.LogisticRegression(random_state=SEED)), "level": "dataset"},
-        {"name": "decision_tree", "mask_fn": build_masker_from_model(tree.DecisionTreeClassifier(random_state=SEED)), "level": "dataset"},
-        {"name": "f_classif", "mask_fn": build_masker_from_score(feature_selection.f_classif), "level": "dataset"}       
+        {"name": "random", "mask_fn": get_random_mask, "level": "fold"},
+        {"name": "random_1", "mask_fn": get_random_mask, "level": "fold"},
+        {"name": "random_2", "mask_fn": get_random_mask, "level": "fold"},
+        {"name": "random_3", "mask_fn": get_random_mask, "level": "fold"},
+        {"name": "random_4", "mask_fn": get_random_mask, "level": "fold"},
+        {"name": "attention", "mask_fn": get_attention_mask, "level": "fold"},
+        {"name": "linear_model", "mask_fn": build_masker_from_model(linear_model.LogisticRegression(random_state=SEED)), "level": "fold"},
+        {"name": "decision_tree", "mask_fn": build_masker_from_model(tree.DecisionTreeClassifier(random_state=SEED)), "level": "fold"},
+        {"name": "f_classif", "mask_fn": build_masker_from_score(feature_selection.f_classif), "level": "fold"}       
     ]
 
     # Do not include the 1.0
