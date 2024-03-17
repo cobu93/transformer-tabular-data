@@ -63,12 +63,12 @@ WORKER_JOBS = [
     {"dataset": "adult", "aggregator": "rnn"},
     {"dataset": "adult", "aggregator": "sum"},
 
-    # {"dataset": "ldpa", "aggregator": "cls"},
-    # {"dataset": "ldpa", "aggregator": "concatenate"},
-    # {"dataset": "ldpa", "aggregator": "max"},
-    # {"dataset": "ldpa", "aggregator": "mean"},
-    # {"dataset": "ldpa", "aggregator": "rnn"},
-    # {"dataset": "ldpa", "aggregator": "sum"},
+    {"dataset": "ldpa", "aggregator": "cls"},
+    {"dataset": "ldpa", "aggregator": "concatenate"},
+    {"dataset": "ldpa", "aggregator": "max"},
+    {"dataset": "ldpa", "aggregator": "mean"},
+    {"dataset": "ldpa", "aggregator": "rnn"},
+    {"dataset": "ldpa", "aggregator": "sum"},
 
     
 ]
