@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.9352316194623407,
+    "accuracy": 0.9353658536585366,
+    "log_loss": 0.17530703974197576,
+    "roc_auc": 0.9352316194623407,
+    "f1": 0.9388696655132641,
+    "precision": 0.8925438596491229,
+    "recall": 0.9902676399026764,
+    "inference_time": 0.06059455871582031,
+    "training_time": 36.46005594730379,
+    "dataset": "sylvine",
+    "model": "transformer/cls",
+    "fold": "F3",
+    "architecture_name": "A4",
+    "fs_method": "none",
+    "fs_percent": 1.0,
+    "fs_n_features": 20
+}

@@ -7,6 +7,10 @@ checkpoint/**/*.pt
 checkpoint/**/*history.json
 checkpoint/**/*.jl
 
+fs_efficency/**/*.pt
+fs_efficency/**/*history.json
+fs_efficency/**/*.jl
+
 wandb
 tabtransformer
 fttransformer

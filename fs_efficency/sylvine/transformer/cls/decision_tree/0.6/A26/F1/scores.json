@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.9547163525604416,
+    "accuracy": 0.9548780487804878,
+    "log_loss": 0.15136546313439725,
+    "roc_auc": 0.9547163525604417,
+    "f1": 0.9565217391304348,
+    "precision": 0.9271070615034168,
+    "recall": 0.9878640776699029,
+    "inference_time": 0.1023402214050293,
+    "training_time": 51.5655393600464,
+    "dataset": "sylvine",
+    "model": "transformer/cls",
+    "fold": "F1",
+    "architecture_name": "A26",
+    "fs_method": "decision_tree",
+    "fs_percent": 0.6,
+    "fs_n_features": 12
+}

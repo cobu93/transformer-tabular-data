@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.7847737373737373,
+    "accuracy": 0.8575815738963531,
+    "log_loss": 0.3046474825012028,
+    "roc_auc": 0.7847737373737375,
+    "f1": 0.9080089263575503,
+    "precision": 0.8918655625913298,
+    "recall": 0.9247474747474748,
+    "inference_time": 1.0192065238952637,
+    "training_time": 375.2776126861572,
+    "dataset": "adult",
+    "model": "transformer/cls",
+    "fold": "F2",
+    "architecture_name": "A27",
+    "fs_method": "none",
+    "fs_percent": 1.0,
+    "fs_n_features": 14
+}
