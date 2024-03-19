@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.8628303780528606,
+    "accuracy": 0.8545454545454545,
+    "log_loss": 0.32359011046848357,
+    "roc_auc": 0.8628303780528606,
+    "f1": 0.8518518518518519,
+    "precision": 0.7796610169491526,
+    "recall": 0.9387755102040817,
+    "inference_time": 0.019921541213989258,
+    "training_time": 5.337161540985108,
+    "dataset": "australian",
+    "model": "transformer/cls",
+    "fold": "F3",
+    "architecture_name": "A23",
+    "fs_method": "none",
+    "fs_percent": 1.0,
+    "fs_n_features": 14
+}

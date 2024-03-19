@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.5936839582234548,
+    "accuracy": 0.6625576160360167,
+    "log_loss": 0.9901535284585445,
+    "training_time": 433.0744433403015,
+    "inference_time": 0.23225116729736328,
+    "dataset": "volkert",
+    "model": "mlp/full",
+    "fold": "F3",
+    "architecture_name": "A1",
+    "fs_method": "linear_model",
+    "fs_percent": 0.8,
+    "fs_n_features": 144
+}

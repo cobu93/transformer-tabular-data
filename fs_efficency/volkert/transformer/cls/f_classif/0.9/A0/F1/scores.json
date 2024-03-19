@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.6298259008547517,
+    "accuracy": 0.6952840300107181,
+    "log_loss": 0.8869602586724225,
+    "inference_time": 0.7798182964324951,
+    "training_time": 1590.092283614138,
+    "dataset": "volkert",
+    "model": "transformer/cls",
+    "fold": "F1",
+    "architecture_name": "A0",
+    "fs_method": "f_classif",
+    "fs_percent": 0.9,
+    "fs_n_features": 162
+}
