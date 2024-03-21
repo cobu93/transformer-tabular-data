@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.18254973850356374,
+    "accuracy": 0.47416309663722184,
+    "log_loss": 1.5463441094295187,
+    "training_time": 1472.6485574245453,
+    "inference_time": 0.6617081165313721,
+    "dataset": "ldpa",
+    "model": "mlp/full",
+    "fold": "F3",
+    "architecture_name": "A1",
+    "fs_method": "decision_tree",
+    "fs_percent": 0.7,
+    "fs_n_features": 4
+}

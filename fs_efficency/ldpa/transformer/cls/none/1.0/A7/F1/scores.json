@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.5396978630905842,
+    "accuracy": 0.7819774054136023,
+    "log_loss": 0.6459916472472971,
+    "inference_time": 3.2864596843719482,
+    "training_time": 5089.353735382492,
+    "dataset": "ldpa",
+    "model": "transformer/cls",
+    "fold": "F1",
+    "architecture_name": "A7",
+    "fs_method": "none",
+    "fs_percent": 1.0,
+    "fs_n_features": 7
+}

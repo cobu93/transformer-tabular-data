@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.2570324553968432,
+    "accuracy": 0.43377056638107514,
+    "log_loss": 2.3032450204627173,
+    "inference_time": 3.103842258453369,
+    "training_time": 5094.326672554016,
+    "dataset": "ldpa",
+    "model": "transformer/cls",
+    "fold": "F2",
+    "architecture_name": "A15",
+    "fs_method": "f_classif",
+    "fs_percent": 0.8,
+    "fs_n_features": 5
+}
