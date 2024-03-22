@@ -297,8 +297,8 @@ def feature_selection_evaluation(
     with open(os.path.join(data_dir, "attention.npy"), "rb") as f:
         attn = np.load(f)
 
-    n_features_selected = int(features_percent * attn.shape[-1])
-
+    n_features_selected = max(1, int(features_percent * attn.shape[-1]))
+    
     eval_data = []
     for c_process in fs_info["clusters"]:
 

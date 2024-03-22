@@ -69,7 +69,6 @@ WORKER_JOBS = [
     {"dataset": "ldpa", "aggregator": "mean"},
     {"dataset": "ldpa", "aggregator": "rnn"},
     {"dataset": "ldpa", "aggregator": "sum"},
-
     
 ]
 
@@ -112,6 +111,7 @@ FEATURE_SELECTION_N_CLUSTERS = {
                                 "sylvine": 4,
                                 "nomao": 4,
                                 "volkert": 4,
+                                "ldpa": 4,
                             }
 
 FEATURE_SELECTION_K_FOLD = 10
