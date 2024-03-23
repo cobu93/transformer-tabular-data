@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.583030303030303,
+    "accuracy": 0.8888888888888888,
+    "log_loss": 0.7375471611574567,
+    "inference_time": 0.02112126350402832,
+    "training_time": 15.871614409656065,
+    "dataset": "anneal",
+    "model": "transformer/cls",
+    "fold": "F0",
+    "architecture_name": "A23",
+    "fs_method": "decision_tree",
+    "fs_percent": 0.7,
+    "fs_n_features": 22
+}
