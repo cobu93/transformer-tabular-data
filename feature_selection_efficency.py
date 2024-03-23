@@ -307,16 +307,20 @@ def get_xgboost_cv_stats(
                     **arch
                 )
         
-        start_time = time.time()
-        model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=2)
-        end_time = time.time()
 
+        le = preprocessing.LabelEncoder()
+        le.fit(y_train)
+
+        start_time = time.time()
+        model.fit(X_train, le.transform(y_train), eval_set=[(X_val, le.transform(y_val))], verbose=2)
+        end_time = time.time()
+        
         inf_start_time = time.time()
         preds = model.predict_proba(X_val)
         inf_end_time = time.time()
         
         scores = evaluating.get_default_scores(
-            y_val,
+            le.transform(y_val),
             preds,
             prefix="",
             multiclass=multiclass
@@ -875,7 +879,6 @@ if __name__ == "__main__":
     ]
     
     datasets = ["kr-vs-kp", "sylvine", "nomao", "adult", "jasmine", "australian", "volkert", "anneal", "ldpa"]
-    datasets = ["kr-vs-kp", "sylvine", "nomao", "adult", "jasmine", "australian", "volkert", "anneal"]
 
     if not os.path.exists(FS_EFFICENCY_CHECKPOINT_BASE_DIR):
         os.makedirs(FS_EFFICENCY_CHECKPOINT_BASE_DIR)
