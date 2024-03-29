@@ -6,7 +6,7 @@
     "f1": 0.9145580019717384,
     "precision": 0.8929889298892989,
     "recall": 0.937194813941741,
-    "inference_time": 0.5333950519561768,
+    "inference_time": 0.551307201385498,
     "training_time": 250.26539334006935,
     "dataset": "adult",
     "model": "transformer/cls",

@@ -6,7 +6,7 @@
     "f1": 0.8194444444444444,
     "precision": 0.7087087087087087,
     "recall": 0.9711934156378601,
-    "inference_time": 0.01078343391418457,
+    "inference_time": 0.010500431060791016,
     "training_time": 0,
     "dataset": "jasmine",
     "model": "mlp/simple",

@@ -6,7 +6,7 @@
     "f1": 0.9325986673500769,
     "precision": 0.9400671661069491,
     "recall": 0.9252479023646072,
-    "inference_time": 0.11824893951416016,
+    "inference_time": 0.11849856376647949,
     "training_time": 0,
     "dataset": "nomao",
     "model": "mlp/simple",

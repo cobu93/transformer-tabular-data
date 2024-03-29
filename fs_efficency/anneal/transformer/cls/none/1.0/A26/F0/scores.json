@@ -2,7 +2,7 @@
     "balanced_accuracy": 0.7981818181818182,
     "accuracy": 0.9861111111111112,
     "log_loss": 0.07920137286316323,
-    "inference_time": 0.020053386688232422,
+    "inference_time": 0.02188253402709961,
     "training_time": 14.030776977539066,
     "dataset": "anneal",
     "model": "transformer/cls",

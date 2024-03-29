@@ -2,7 +2,7 @@
     "balanced_accuracy": 0.505899871750081,
     "accuracy": 0.7611934640027297,
     "log_loss": 0.7068237445502589,
-    "inference_time": 1.6566376686096191,
+    "inference_time": 1.7180721759796143,
     "training_time": 2620.1663602704875,
     "dataset": "ldpa",
     "model": "transformer/cls",

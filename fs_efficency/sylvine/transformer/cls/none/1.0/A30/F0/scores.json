@@ -6,7 +6,7 @@
     "f1": 0.9443786982248521,
     "precision": 0.9214780600461894,
     "recall": 0.9684466019417476,
-    "inference_time": 0.10177254676818848,
+    "inference_time": 0.10337495803833008,
     "training_time": 48.73571756907871,
     "dataset": "sylvine",
     "model": "transformer/cls",

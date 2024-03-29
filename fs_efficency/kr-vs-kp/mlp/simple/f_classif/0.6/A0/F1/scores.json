@@ -6,7 +6,7 @@
     "f1": 0.9423868312757202,
     "precision": 0.9385245901639344,
     "recall": 0.9462809917355371,
-    "inference_time": 0.010891199111938477,
+    "inference_time": 0.012644529342651367,
     "training_time": 0,
     "dataset": "kr-vs-kp",
     "model": "mlp/simple",

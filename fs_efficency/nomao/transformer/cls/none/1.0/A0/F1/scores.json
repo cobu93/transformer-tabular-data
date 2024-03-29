@@ -6,7 +6,7 @@
     "f1": 0.9729182485446722,
     "precision": 0.9685059208868733,
     "recall": 0.9773709636409865,
-    "inference_time": 0.403425931930542,
+    "inference_time": 0.3955962657928467,
     "training_time": 558.280960057911,
     "dataset": "nomao",
     "model": "transformer/cls",

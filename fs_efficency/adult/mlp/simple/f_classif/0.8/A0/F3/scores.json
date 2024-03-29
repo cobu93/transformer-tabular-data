@@ -6,7 +6,7 @@
     "f1": 0.9090320492068631,
     "precision": 0.8751753155680224,
     "recall": 0.945613739686816,
-    "inference_time": 0.1669783592224121,
+    "inference_time": 0.16204333305358887,
     "training_time": 0,
     "dataset": "adult",
     "model": "mlp/simple",

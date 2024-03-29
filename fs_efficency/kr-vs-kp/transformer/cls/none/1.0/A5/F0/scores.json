@@ -6,7 +6,7 @@
     "f1": 1.0,
     "precision": 1.0,
     "recall": 1.0,
-    "inference_time": 0.04304671287536621,
+    "inference_time": 0.043723344802856445,
     "training_time": 46.39049458194088,
     "dataset": "kr-vs-kp",
     "model": "transformer/cls",

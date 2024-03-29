@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.8161592505854801,
+    "accuracy": 0.8272727272727273,
+    "log_loss": 0.43738032252015707,
+    "roc_auc": 0.8161592505854802,
+    "f1": 0.7865168539325843,
+    "precision": 0.875,
+    "recall": 0.7142857142857143,
+    "inference_time": 0.004425048828125,
+    "training_time": 0,
+    "dataset": "australian",
+    "model": "mlp/simple",
+    "fold": "F3",
+    "architecture_name": "A1",
+    "fs_method": "linear_model",
+    "fs_percent": 0.5,
+    "fs_n_features": 7
+}

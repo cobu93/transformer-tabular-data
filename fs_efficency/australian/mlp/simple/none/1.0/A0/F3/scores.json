@@ -6,7 +6,7 @@
     "f1": 0.8484848484848485,
     "precision": 0.84,
     "recall": 0.8571428571428571,
-    "inference_time": 0.0030584335327148438,
+    "inference_time": 0.003123044967651367,
     "training_time": 0,
     "dataset": "australian",
     "model": "mlp/simple",

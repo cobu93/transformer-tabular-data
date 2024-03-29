@@ -2,7 +2,7 @@
     "balanced_accuracy": 0.3833020370299422,
     "accuracy": 0.5407288317256163,
     "log_loss": 1.3967047347208694,
-    "inference_time": 0.17942023277282715,
+    "inference_time": 0.18657851219177246,
     "training_time": 0,
     "dataset": "volkert",
     "model": "mlp/simple",

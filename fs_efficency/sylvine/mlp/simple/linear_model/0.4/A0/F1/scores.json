@@ -6,7 +6,7 @@
     "f1": 0.9100998890122086,
     "precision": 0.8384458077709611,
     "recall": 0.9951456310679612,
-    "inference_time": 0.018024682998657227,
+    "inference_time": 0.018561601638793945,
     "training_time": 0,
     "dataset": "sylvine",
     "model": "mlp/simple",

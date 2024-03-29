@@ -6,7 +6,7 @@
     "f1": 0.82,
     "precision": 0.82,
     "recall": 0.82,
-    "inference_time": 0.4180288314819336,
+    "inference_time": 0.00936269760131836,
     "training_time": 4.372274279594421,
     "dataset": "australian",
     "model": "transformer/cls",

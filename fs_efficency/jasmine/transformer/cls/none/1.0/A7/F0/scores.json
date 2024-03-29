@@ -6,7 +6,7 @@
     "f1": 0.8434622467771639,
     "precision": 0.7633333333333333,
     "recall": 0.9423868312757202,
-    "inference_time": 0.10002326965332031,
+    "inference_time": 0.09397172927856445,
     "training_time": 85.120371425474,
     "dataset": "jasmine",
     "model": "transformer/cls",

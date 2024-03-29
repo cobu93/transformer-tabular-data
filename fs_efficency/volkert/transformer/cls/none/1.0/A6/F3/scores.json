@@ -2,7 +2,7 @@
     "balanced_accuracy": 0.6121659427332193,
     "accuracy": 0.6805659770607783,
     "log_loss": 0.9261413305687045,
-    "inference_time": 2.0070712566375732,
+    "inference_time": 1.9131560325622559,
     "training_time": 1784.9876431551843,
     "dataset": "volkert",
     "model": "transformer/cls",

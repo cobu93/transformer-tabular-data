@@ -2,7 +2,7 @@
     "balanced_accuracy": 0.5981818181818183,
     "accuracy": 0.951048951048951,
     "log_loss": 0.4853534558731063,
-    "inference_time": 0.004324197769165039,
+    "inference_time": 0.004850864410400391,
     "training_time": 0,
     "dataset": "anneal",
     "model": "mlp/simple",

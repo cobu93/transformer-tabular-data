@@ -1,0 +1,17 @@
+{
+    "balanced_accuracy": 0.8056013086642599,
+    "accuracy": 0.7973199329983249,
+    "log_loss": 0.42496241258070805,
+    "roc_auc": 0.8056013086642599,
+    "f1": 0.8082408874801902,
+    "precision": 0.7203389830508474,
+    "recall": 0.9205776173285198,
+    "training_time": 0.10257220268249512,
+    "inference_time": 0.001058340072631836,
+    "dataset": "jasmine",
+    "model": "xgboost",
+    "architecture_name": "A3",
+    "fs_method": "none",
+    "fs_percent": 1.0,
+    "fs_n_features": 144
+}

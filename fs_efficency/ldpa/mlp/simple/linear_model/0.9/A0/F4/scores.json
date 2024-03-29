@@ -2,7 +2,7 @@
     "balanced_accuracy": 0.3170693020045908,
     "accuracy": 0.5197710126246351,
     "log_loss": 1.6806945446767907,
-    "inference_time": 0.504159688949585,
+    "inference_time": 0.5026402473449707,
     "training_time": 0,
     "dataset": "ldpa",
     "model": "mlp/simple",
