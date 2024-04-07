@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.9098445099538638,
+    "accuracy": 0.9263825929283771,
+    "log_loss": 0.18792407389009025,
+    "roc_auc": 0.9098445099538638,
+    "f1": 0.9483985765124555,
+    "precision": 0.9481575603557815,
+    "recall": 0.9486397152301043,
+    "inference_time": 0.134521484375,
+    "training_time": 0,
+    "dataset": "nomao",
+    "model": "mlp/simple_nd_nn",
+    "fold": "F0",
+    "architecture_name": "A1",
+    "fs_method": "random_5",
+    "fs_percent": 0.9,
+    "fs_n_features": 106
+}

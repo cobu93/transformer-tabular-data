@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.7476258309591644,
+    "accuracy": 0.750524109014675,
+    "log_loss": 0.5332671188601174,
+    "roc_auc": 0.7476258309591644,
+    "f1": 0.7863554757630161,
+    "precision": 0.697452229299363,
+    "recall": 0.9012345679012346,
+    "inference_time": 0.010484457015991211,
+    "training_time": 0,
+    "dataset": "jasmine",
+    "model": "mlp/simple_nd_nn",
+    "fold": "F4",
+    "architecture_name": "A0",
+    "fs_method": "random_3",
+    "fs_percent": 0.5,
+    "fs_n_features": 72
+}

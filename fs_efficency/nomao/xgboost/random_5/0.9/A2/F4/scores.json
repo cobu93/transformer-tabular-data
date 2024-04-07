@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.9648006309537742,
+    "accuracy": 0.9718897352194414,
+    "log_loss": 0.0778046675272631,
+    "roc_auc": 0.9648006309537742,
+    "f1": 0.9803124603073796,
+    "precision": 0.9791930981984268,
+    "recall": 0.9814343845371313,
+    "training_time": 1.4445242881774902,
+    "inference_time": 0.007733821868896484,
+    "dataset": "nomao",
+    "model": "xgboost",
+    "fold": "F4",
+    "architecture_name": "A2",
+    "fs_method": "random_5",
+    "fs_percent": 0.9,
+    "fs_n_features": 106
+}

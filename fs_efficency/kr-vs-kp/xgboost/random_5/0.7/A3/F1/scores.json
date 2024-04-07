@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.9826492365356847,
+    "accuracy": 0.9823874755381604,
+    "log_loss": 0.043690928858524186,
+    "roc_auc": 0.9826492365356847,
+    "f1": 0.9815195071868583,
+    "precision": 0.9755102040816327,
+    "recall": 0.987603305785124,
+    "training_time": 0.09404540061950684,
+    "inference_time": 0.001055002212524414,
+    "dataset": "kr-vs-kp",
+    "model": "xgboost",
+    "fold": "F1",
+    "architecture_name": "A3",
+    "fs_method": "random_5",
+    "fs_percent": 0.7,
+    "fs_n_features": 25
+}

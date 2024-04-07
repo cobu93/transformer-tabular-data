@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.7785691674580564,
+    "accuracy": 0.779874213836478,
+    "log_loss": 0.4948819853384689,
+    "roc_auc": 0.7785691674580562,
+    "f1": 0.7969052224371374,
+    "precision": 0.7518248175182481,
+    "recall": 0.8477366255144033,
+    "inference_time": 0.06361651420593262,
+    "training_time": 36.40366001129149,
+    "dataset": "jasmine",
+    "model": "transformer/cls",
+    "fold": "F3",
+    "architecture_name": "A24",
+    "fs_method": "random_2",
+    "fs_percent": 0.7,
+    "fs_n_features": 100
+}
