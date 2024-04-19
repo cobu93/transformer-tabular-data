@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.5884973424682786,
+    "accuracy": 0.5929549902152642,
+    "log_loss": 0.9165931698178733,
+    "roc_auc": 0.5884973424682786,
+    "f1": 0.5398230088495575,
+    "precision": 0.580952380952381,
+    "recall": 0.5041322314049587,
+    "inference_time": 0.010032415390014648,
+    "training_time": 0,
+    "dataset": "kr-vs-kp",
+    "model": "mlp/simple_nd_nnw",
+    "fold": "F4",
+    "architecture_name": "A0",
+    "fs_method": "random_3",
+    "fs_percent": 0.4,
+    "fs_n_features": 14
+}

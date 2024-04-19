@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.5298134680134681,
+    "accuracy": 0.7671145233525272,
+    "log_loss": 0.4928677843713831,
+    "roc_auc": 0.5298134680134681,
+    "f1": 0.8655238658194178,
+    "precision": 0.7712667895707137,
+    "recall": 0.986026936026936,
+    "inference_time": 0.1445448398590088,
+    "training_time": 0,
+    "dataset": "adult",
+    "model": "mlp/simple_nd_nnw",
+    "fold": "F2",
+    "architecture_name": "A0",
+    "fs_method": "decision_tree",
+    "fs_percent": 0.4,
+    "fs_n_features": 5
+}

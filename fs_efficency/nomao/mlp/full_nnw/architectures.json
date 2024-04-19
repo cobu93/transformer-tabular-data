@@ -1,0 +1,16 @@
+{
+    "A0": {
+        "dropout": 0.2,
+        "hidden_units": 512,
+        "num_hidden": 3,
+        "optimizer__lr": 0.001,
+        "optimizer__weight_decay": 0.0
+    },
+    "A1": {
+        "dropout": 0.2,
+        "hidden_units": 512,
+        "num_hidden": 6,
+        "optimizer__lr": 0.001,
+        "optimizer__weight_decay": 0.0
+    }
+}
