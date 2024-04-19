@@ -736,7 +736,11 @@ if __name__ == "__main__":
             "test_stats_fn": build_mlp_test_stats(),
         },
         {
-            "name": "mlp/full_nd_nn",
+            "name": "mlp/full_nnw",
+            "test_stats_fn": build_mlp_test_stats(nonlinearity=nn.Identity()),
+        },
+        {
+            "name": "mlp/full_nd_nnw",
             "test_stats_fn": build_mlp_test_stats(nonlinearity=nn.Identity()),
         },
         {
@@ -748,8 +752,12 @@ if __name__ == "__main__":
             "test_stats_fn": build_mlp_simple_test_stats(base_model="mlp/full_nd"),
         },
         {
-            "name": "mlp/simple_nd_nn",
-            "test_stats_fn": build_mlp_simple_test_stats(base_model="mlp/full_nd_nn", nonlinearity=nn.Identity()),
+            "name": "mlp/simple_nnw",
+            "test_stats_fn": build_mlp_simple_test_stats(base_model="mlp/full_nnw", nonlinearity=nn.Identity()),
+        },
+        {
+            "name": "mlp/simple_nd_nnw",
+            "test_stats_fn": build_mlp_simple_test_stats(base_model="mlp/full_nd_nnw", nonlinearity=nn.Identity()),
         }
     ]
     
@@ -766,7 +774,7 @@ if __name__ == "__main__":
     best_archs_indices = scores_df.query(
         "fs_percent==1 "
         "and fs_method=='decision_tree' " # The method is not relevant
-        "and model in ['mlp/full', 'mlp/full_nd', 'mlp/full_nd_nn', 'xgboost']" # This adds the best architecture instead of doing hyperparameter search
+        "and model in ['mlp/full', 'mlp/full_nd', 'mlp/full_nnw', 'mlp/full_nd_nnw', 'xgboost']" # This adds the best architecture instead of doing hyperparameter search
     ).groupby(["dataset", "model"])["balanced_accuracy_mean"].idxmax()
 
     best_archs_df = scores_df.loc[best_archs_indices, ["dataset", "model", "architecture_name"]]
@@ -799,7 +807,8 @@ if __name__ == "__main__":
             "model": {
                 "mlp/full/best": "mlp/full",
                 "mlp/full_nd/best": "mlp/full_nd",
-                "mlp/full_nd_nn/best": "mlp/full_nd_nn",
+                "mlp/full_nnw/best": "mlp/full_nnw",
+                "mlp/full_nd_nnw/best": "mlp/full_nd_nnw",
                 "xgboost/best": "xgboost"
             }
         }).drop_duplicates(),
@@ -835,7 +844,8 @@ if __name__ == "__main__":
                 "model": {
                     "mlp/full/best": "mlp/full",
                     "mlp/full_nd/best": "mlp/full_nd",
-                    "mlp/full_nd_nn/best": "mlp/full_nd_nn",
+                    "mlp/full_nnw/best": "mlp/full_nnw",
+                    "mlp/full_nd_nnw/best": "mlp/full_nd_nnw",
                     "xgboost/best": "xgboost"   
                 }
             }).merge(

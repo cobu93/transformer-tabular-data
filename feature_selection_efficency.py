@@ -884,17 +884,6 @@ if __name__ == "__main__":
             }
         },
         {
-            "name": "mlp/full_nd_nn",
-            "cv_stats_fn": build_mlp_cv_stats(nonlinearity=nn.Identity()),
-            "hp_space": {
-                "hidden_units": [512],
-                "num_hidden": [3, 6],
-                "dropout": [0.0],
-                "optimizer__lr": [0.001],
-                "optimizer__weight_decay": [0.1]
-            }
-        },
-        {
            "name": "mlp/full_nd",
            "cv_stats_fn": build_mlp_cv_stats(),
            "hp_space": {
@@ -904,6 +893,28 @@ if __name__ == "__main__":
                "optimizer__lr": [0.001],
                "optimizer__weight_decay": [0.1]
            }
+        },
+        {
+            "name": "mlp/full_nnw",
+            "cv_stats_fn": build_mlp_cv_stats(nonlinearity=nn.Identity()),
+            "hp_space": {
+                "hidden_units": [512],
+                "num_hidden": [3, 6],
+                "dropout": [0.2],
+                "optimizer__lr": [0.001],
+                "optimizer__weight_decay": [0.0]
+            }
+        },
+        {
+            "name": "mlp/full_nd_nnw",
+            "cv_stats_fn": build_mlp_cv_stats(nonlinearity=nn.Identity()),
+            "hp_space": {
+                "hidden_units": [512],
+                "num_hidden": [3, 6],
+                "dropout": [0.0],
+                "optimizer__lr": [0.001],
+                "optimizer__weight_decay": [0.0]
+            }
         },
         {
             "name": "mlp/simple",
@@ -928,14 +939,25 @@ if __name__ == "__main__":
             }
         },
         {
-            "name": "mlp/simple_nd_nn",
-            "cv_stats_fn": build_mlp_simple_cv_stats(base_model="mlp/full_nd_nn", nonlinearity=nn.Identity()),
+            "name": "mlp/simple_nnw",
+            "cv_stats_fn": build_mlp_simple_cv_stats(base_model="mlp/full_nnw", nonlinearity=nn.Identity()),
+            "hp_space": {
+                "hidden_units": [512],
+                "num_hidden": [3, 6],
+                "dropout": [0.2],
+                "optimizer__lr": [0.001],
+                "optimizer__weight_decay": [0.0]
+            }
+        },
+        {
+            "name": "mlp/simple_nd_nnw",
+            "cv_stats_fn": build_mlp_simple_cv_stats(base_model="mlp/full_nd_nnw", nonlinearity=nn.Identity()),
             "hp_space": {
                 "hidden_units": [512],
                 "num_hidden": [3, 6],
                 "dropout": [0.0],
                 "optimizer__lr": [0.001],
-                "optimizer__weight_decay": [0.1]
+                "optimizer__weight_decay": [0.0]
             }
         }
     ]
@@ -952,14 +974,15 @@ if __name__ == "__main__":
         datasets,
         models,
         feature_selectors = [
+            {"name": "linear_model", "mask_fn": build_masker_from_model(linear_model.LogisticRegression(random_state=SEED)), "level": "fold"},
+            {"name": "decision_tree", "mask_fn": build_masker_from_model(tree.DecisionTreeClassifier(random_state=SEED)), "level": "fold"},
+            {"name": "f_classif", "mask_fn": build_masker_from_score(feature_selection.f_classif), "level": "fold"},
+
             {"name": "random_1", "mask_fn": get_random_mask, "level": "fold"},
             {"name": "random_2", "mask_fn": get_random_mask, "level": "fold"},
             {"name": "random_3", "mask_fn": get_random_mask, "level": "fold"},
             {"name": "random_4", "mask_fn": get_random_mask, "level": "fold"},
             {"name": "random_5", "mask_fn": get_random_mask, "level": "fold"},
-            {"name": "linear_model", "mask_fn": build_masker_from_model(linear_model.LogisticRegression(random_state=SEED)), "level": "fold"},
-            {"name": "decision_tree", "mask_fn": build_masker_from_model(tree.DecisionTreeClassifier(random_state=SEED)), "level": "fold"},
-            {"name": "f_classif", "mask_fn": build_masker_from_score(feature_selection.f_classif), "level": "fold"}   
 
         ],
         feature_percents = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
