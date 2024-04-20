@@ -1,59 +1,102 @@
-# Transformers for high-dimensional tabular data
+# Dynamic feature selection with Transformers for tabular data
 
-This repository contains the experiments introduced in the "Transformers for high-dimensional tabular data" paper.
+This repository contains the experiments introduced in the "Dynamic feature selection with Transformers for tabular data" paper.
 
-## Downloading required data
+## Abstract
 
-To get started, the initial step is to clone or download the repository. However, please note that some additional files need to be downloaded as well since they are pretty large. These files are crucial to avoid the tedious process of reproducing results, training models, and extracting information from the datasets.
+Tabular data is a widely used data format in machine learning because it can naturally describe many different phenomena. However, deep learning has not been as successful with tabular data as with other applications such as natural language processing or vision. In this paper, we demonstrate that Transformers can perform better than other methods for tabular data. We argue that this is because Transformers can function as an efficient dynamic feature selection algorithm.  We introduce a measure that captures the _cumulative_ attention that a feature gets across all the layers of the Transformer. Our experiments revealed that Transformers learn to give more _cumulative_ attention to relevant features, which is important for high-dimensional datasets where many features may be irrelevant or the relevant features may change depending on the input. Moreover, Transformers can handle a variable number of features with the same number of parameters. This contrasts with other machine learning models whose parameters increase with the number of features, requiring larger datasets to deduce relationships among features effectively. Our findings highlight the potential of Transformer-based models in addressing challenges associated with tabular data.
 
-
-- [Replicating results files](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/EaJg3TK85n5HkaDydbPpq7UBa1VcqcrhWDlzMP4ZJwe6Ww?e=QD130r) 
-- [Hyperparameter search files](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/EWN7ic04YQ1OldxVpWLzTgkBC5RlMRum45-ARjrr1rjIGg?e=605v7A)
-- [Cumulative attention vectors](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/ESekCil3dUlBk2am7wisHuYBjquzxgNDLueaLJbsf7j-wg?e=PaBPPS)
-
-Below we explain how we used these files. If you don't require them all, continue reading and downloading those you need. You must extract the files in the repository's root path.
 
 ## Recommended setup
 
-Our recommendation is to install conda, create a new environment and activate it running:
+For practicality, we include a conda environment YML file ready to be imported. By simply running the following command the dependencies installation will be done (requires conda):
 
 ~~~
-conda create -n tab-trans python==3.8.11
-conda activate tab-trans
+conda env create -f environment.yml
 ~~~
 
-The requirements for executing any code are listed in the _requirements.txt_ file. If you are in the conda environment, you can install them by running:
+## Downloading data
 
-~~~
-pip install -r requirements.txt
-~~~
+To correctly replicate the results, download the full "data" directory containing the cumulative attention matrices and combine with the one existent.
 
-## Procedures
+- [Data directory](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/ESjvdbUKeI9Dt8AcTU4ICIQB75_Al-wEZFRq-GKpKx7y4w?e=DmI9Hc) 
 
-### Tab and FT Transformers replication
+## Reproducing results
 
-To validate our implementation, we replicated the Tab and FT Transformers results. The replication of these results is included in files __tabtransformer_replicate.py__ and __fttransformer_replicate.py__. 
+To rapidly reproduce the results shown in the paper, we include the notebook __Results.ipynb__. All information to execute the results' notebook is contained in this repository and in the downloaded data directory. The required files are:
 
-To avoid retraining the models, we provide the [fitted models](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/EaJg3TK85n5HkaDydbPpq7UBa1VcqcrhWDlzMP4ZJwe6Ww?e=QD130r). If you go through this option, download the files and decompress them in the root path. To evaluate the models and get the same results reported for those architectures, we provide the files __tabtransformer_evaluation.py__ and __fttransformer_evaluation.py__. 
+- cross_validation_scores.csv: This files contains the cross-validation results for all the architectures explored in the hyperparameter search space for every dataset.
 
-### Dataset selection
+- selected_architectures.csv: Contains the architectures selected achieving the lowest cross-entropy loss.
 
-The described procedure of dataset selection is included in the __dataset_selection.ipynb__ file. The selected datasets and their properties are stored in a file named __selected_datasets.csv__.
+- feature_selection_dataset_fmask_scores.csv: Contains the results achieved when applying the feature selection at dataset level.
 
-### Hyperparameter search and models evaluations
+- feature_selection_cluster_fmask_scores.csv: Contains the results achieved when applying the feature selection at cluster level.
 
-The hyperparameter search was done using the script __full_param_search.py__. Internally, the script executes a tensorboard instance, the hyperparameter search, a cleansing files procedure, the best model evaluation, and each trial evaluation for each selected dataset.
 
-The hyperparameter search is in the script __param_search.py__. It includes the procedure done by Optuna. The cleansing procedure is in the file __clean_files.py__. It moves the files of old Optuna executions to a secondary folder which can be deleted manually to free space. The best model evaluation is in the file __model_evaluation.py__. It automatically recovers the best Optuna trial and evaluates it. The evaluation metrics of the best trial are saved inside each dataset folder in the file _evaluation.json_. Finally, each trial evaluation is in the script __trials_evaluation.py__. As the best model evaluation, it saves a file inside each dataset folder named _evaluation_trial\_<trial_id>.json_.
+If you would want to replicate the results from scratch (may take a several amount of time) we include the following scripts:
 
-To compile the information of all trials, we include the script __get_trials_info.py__, which generates a CSV file named _trials\_info.csv_.
+- setup.py: Prepare data and partitions used through the article experiments. 
+- hp_search.py: This scripts executes the hyperparameter search proposed in the article.
+- model_selection.csv: Selects and refits the architectures with the lowest cross-validation cross-entropy loss mean for each dataset.
+- attention_evaluation_dataset.py: Evaluates the usage of cumulative attention and other feature selection algorithms at dataset level.
+- attention_evaluation_cluster.py: Evaluates the usage of cumulative attention and other feature selection algorithms at cluster level.
 
-To avoid the repetition of this process, we provide the [hyperparameter search files](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/EWN7ic04YQ1OldxVpWLzTgkBC5RlMRum45-ARjrr1rjIGg?e=605v7A), including the fitted models and the Optuna files.
 
-### Cumulative attention
+# Cumulative attention
 
-To extract the cumulative attention vectors for each dataset's best result, we provide the script __attention_extraciton.py__. It generates a folder named attention. Inside the folder, there exists a folder for each dataset. Inside each dataset folder are the cumulative vectors for train, validation, and test, which were written using numpy. The last column of the array is the label assigned to each cumulative vector. To avoid the extractionprocess we provide the [cumulative attention vectors](https://correoipn-my.sharepoint.com/:u:/g/personal/ucoronab_ipn_mx/ESekCil3dUlBk2am7wisHuYBjquzxgNDLueaLJbsf7j-wg?e=PaBPPS) generated.
+The datafolder contains the cumulative attention vectors generated for each dataset. Nevertheless, since it could be of your interest to generate your own cumulative attention vectors, we provide the code for computing them.
 
-## Results
+Firstly, it is important to mention that we couldn't find a way to recover the cube attentions, whether directly in the Transformer encoder or through hooks using the current PyTorch's implementations. That is why we developed our own [Transformer implementation](https://github.com/cobu93/attn-fs-archs).
 
-To reproduce the results in the paper, we include the notebook __Results.ipynb__.
+To compute the cumulative attention, we provide a function in the __utils.attention__ package. Once you have recovered the cube attention, you can compute the cumulative attention vectors by calling:
+
+```python
+from utils import attention
+
+# Output dims: n_layers, batch_size, n_features
+_, cumulative_attention = attention.compute_std_attentions(
+    attention_cubes, # Dims: n_layers, batch_size, n_heads, n_features, n_features 
+    aggregator, # {"cls", "other"}
+)
+```
+
+If you simply want to test the function, copy and run the following code snippet: 
+
+
+```python
+import torch
+import numpy as np
+import torch.nn.functional as F
+from utils import attention
+
+n_layers = 4
+batch_size = 16
+n_heads = 4
+n_features = 10
+
+attention_cubes = torch.randn(
+                        n_layers,
+                        batch_size,
+                        n_heads,
+                        n_features,
+                        n_features
+                        )
+
+# Normalizing as a probability mass function
+attention_cubes = F.softmax(attention_cubes, dim=-1)
+
+# Testing normalization
+assert np.allclose(attention_cubes.sum(dim=-1), 1), "Bad normalization"
+
+_, cumulative_attentions = attention.compute_std_attentions(
+    attention_cubes,
+    "other"
+)
+
+# Testing cum_attentions normality
+assert np.allclose(cumulative_attentions.sum(dim=-1), 1), "Bad normalization" 
+print("Cumulative attention shape:", cumulative_attentions.shape)
+```
+
+It is important to send "cls" to the function if you are using the FT-Transformer approach. Because the predictions are generated solely using the __CLS__ token for this architecture, the considered attention is the given through this embedding in the last layer, then, its computation is not as using any other method considering the whole set of the embeddings in the last layer.
