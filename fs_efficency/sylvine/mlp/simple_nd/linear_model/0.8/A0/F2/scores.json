@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.9340448188270007,
+    "accuracy": 0.9341463414634147,
+    "log_loss": 0.1674934841743206,
+    "roc_auc": 0.9340448188270007,
+    "f1": 0.9369158878504673,
+    "precision": 0.9011235955056179,
+    "recall": 0.975669099756691,
+    "inference_time": 0.019157886505126953,
+    "training_time": 0,
+    "dataset": "sylvine",
+    "model": "mlp/simple_nd",
+    "fold": "F2",
+    "architecture_name": "A0",
+    "fs_method": "linear_model",
+    "fs_percent": 0.8,
+    "fs_n_features": 16
+}

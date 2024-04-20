@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.6035435876966212,
+    "accuracy": 0.7038585209003215,
+    "log_loss": 0.8669810764639353,
+    "training_time": 79.92268800735474,
+    "inference_time": 0.18847990036010742,
+    "dataset": "volkert",
+    "model": "xgboost",
+    "fold": "F2",
+    "architecture_name": "A2",
+    "fs_method": "linear_model",
+    "fs_percent": 0.6,
+    "fs_n_features": 108
+}

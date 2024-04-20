@@ -1,0 +1,17 @@
+{
+    "balanced_accuracy": 0.7923142431339152,
+    "accuracy": 0.8043478260869565,
+    "log_loss": 0.8753281456347937,
+    "roc_auc": 0.7923142431339152,
+    "f1": 0.7567567567567568,
+    "precision": 0.84,
+    "recall": 0.6885245901639344,
+    "training_time": 1.8544483184814453,
+    "inference_time": 0.0035724639892578125,
+    "dataset": "australian",
+    "model": "mlp/full",
+    "architecture_name": "A0",
+    "fs_method": "decision_tree",
+    "fs_percent": 0.7,
+    "fs_n_features": 9
+}

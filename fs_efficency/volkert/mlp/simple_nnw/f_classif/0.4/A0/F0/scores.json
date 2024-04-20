@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.33043470049888857,
+    "accuracy": 0.4862808145766345,
+    "log_loss": 1.4453127970198991,
+    "inference_time": 0.16687464714050293,
+    "training_time": 0,
+    "dataset": "volkert",
+    "model": "mlp/simple_nnw",
+    "fold": "F0",
+    "architecture_name": "A0",
+    "fs_method": "f_classif",
+    "fs_percent": 0.4,
+    "fs_n_features": 72
+}

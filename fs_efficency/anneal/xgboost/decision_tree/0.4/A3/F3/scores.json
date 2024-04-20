@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.6511363636363636,
+    "accuracy": 0.9020979020979021,
+    "log_loss": 0.2373493741250801,
+    "training_time": 0.1327378749847412,
+    "inference_time": 0.0010406970977783203,
+    "dataset": "anneal",
+    "model": "xgboost",
+    "fold": "F3",
+    "architecture_name": "A3",
+    "fs_method": "decision_tree",
+    "fs_percent": 0.4,
+    "fs_n_features": 12
+}

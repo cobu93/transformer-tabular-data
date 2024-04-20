@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.9960751482380411,
+    "accuracy": 0.9960861056751468,
+    "log_loss": 0.013916317089257817,
+    "roc_auc": 0.9960751482380412,
+    "f1": 0.9958677685950413,
+    "precision": 0.9958677685950413,
+    "recall": 0.9958677685950413,
+    "inference_time": 0.08339977264404297,
+    "training_time": 47.93217536381313,
+    "dataset": "kr-vs-kp",
+    "model": "transformer/cls",
+    "fold": "F3",
+    "architecture_name": "A23",
+    "fs_method": "none",
+    "fs_percent": 1.0,
+    "fs_n_features": 36
+}

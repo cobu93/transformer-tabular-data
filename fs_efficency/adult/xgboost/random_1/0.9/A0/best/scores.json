@@ -1,0 +1,17 @@
+{
+    "balanced_accuracy": 0.757165911549168,
+    "accuracy": 0.8613983007472618,
+    "log_loss": 0.306445600235528,
+    "roc_auc": 0.7571659115491679,
+    "f1": 0.9131939992306706,
+    "precision": 0.8748311018302419,
+    "recall": 0.9550757677350141,
+    "training_time": 0.09603309631347656,
+    "inference_time": 0.0030622482299804688,
+    "dataset": "adult",
+    "model": "xgboost",
+    "architecture_name": "A0",
+    "fs_method": "random_1",
+    "fs_percent": 0.9,
+    "fs_n_features": 12
+}

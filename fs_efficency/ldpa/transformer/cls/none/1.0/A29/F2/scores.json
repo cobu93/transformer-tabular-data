@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.571055811553543,
+    "accuracy": 0.7901281370839336,
+    "log_loss": 0.6420037079987979,
+    "inference_time": 2.2425503730773926,
+    "training_time": 3311.46066929843,
+    "dataset": "ldpa",
+    "model": "transformer/cls",
+    "fold": "F2",
+    "architecture_name": "A29",
+    "fs_method": "none",
+    "fs_percent": 1.0,
+    "fs_n_features": 7
+}

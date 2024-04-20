@@ -1,0 +1,17 @@
+{
+    "balanced_accuracy": 0.9829428367727633,
+    "accuracy": 0.9828125,
+    "log_loss": 0.1095298169632231,
+    "roc_auc": 0.9829428367727633,
+    "f1": 0.9828926905132193,
+    "precision": 0.9693251533742331,
+    "recall": 0.9968454258675079,
+    "inference_time": 0.06352949142456055,
+    "training_time": 0,
+    "dataset": "kr-vs-kp",
+    "model": "transformer/cls",
+    "architecture_name": "A2",
+    "fs_method": "linear_model",
+    "fs_percent": 0.7,
+    "fs_n_features": 25
+}

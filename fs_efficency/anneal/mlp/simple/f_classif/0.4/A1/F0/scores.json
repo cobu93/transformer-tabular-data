@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.5496969696969697,
+    "accuracy": 0.75,
+    "log_loss": 1.8626689635120448,
+    "inference_time": 0.0050580501556396484,
+    "training_time": 0,
+    "dataset": "anneal",
+    "model": "mlp/simple",
+    "fold": "F0",
+    "architecture_name": "A1",
+    "fs_method": "f_classif",
+    "fs_percent": 0.4,
+    "fs_n_features": 12
+}

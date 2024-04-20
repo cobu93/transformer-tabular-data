@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.9315819844258443,
+    "accuracy": 0.9317073170731708,
+    "log_loss": 0.17275762692855526,
+    "roc_auc": 0.9315819844258444,
+    "f1": 0.9351851851851852,
+    "precision": 0.891832229580574,
+    "recall": 0.9829683698296837,
+    "training_time": 0.11443877220153809,
+    "inference_time": 0.0009770393371582031,
+    "dataset": "sylvine",
+    "model": "xgboost",
+    "fold": "F2",
+    "architecture_name": "A0",
+    "fs_method": "random_2",
+    "fs_percent": 0.8,
+    "fs_n_features": 16
+}

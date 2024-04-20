@@ -1,0 +1,14 @@
+{
+    "balanced_accuracy": 0.22849233304534525,
+    "accuracy": 0.4849300526974258,
+    "log_loss": 1.45952488276628,
+    "training_time": 6.194117307662964,
+    "inference_time": 0.3645787239074707,
+    "dataset": "ldpa",
+    "model": "xgboost",
+    "fold": "F3",
+    "architecture_name": "A2",
+    "fs_method": "linear_model",
+    "fs_percent": 0.4,
+    "fs_n_features": 2
+}

@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.7099364335898293,
+    "accuracy": 0.7272727272727273,
+    "log_loss": 0.551013335735821,
+    "roc_auc": 0.7099364335898294,
+    "f1": 0.6428571428571429,
+    "precision": 0.7714285714285715,
+    "recall": 0.5510204081632653,
+    "training_time": 0.03064894676208496,
+    "inference_time": 0.0005705356597900391,
+    "dataset": "australian",
+    "model": "xgboost",
+    "fold": "F2",
+    "architecture_name": "A1",
+    "fs_method": "random_5",
+    "fs_percent": 0.4,
+    "fs_n_features": 5
+}

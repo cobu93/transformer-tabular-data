@@ -1,0 +1,17 @@
+{
+    "balanced_accuracy": 0.9672578644607437,
+    "accuracy": 0.9671875,
+    "log_loss": 0.079685438399204,
+    "roc_auc": 0.9672578644607437,
+    "f1": 0.9671361502347418,
+    "precision": 0.9596273291925466,
+    "recall": 0.9747634069400631,
+    "training_time": 8.735857248306274,
+    "inference_time": 0.012635231018066406,
+    "dataset": "kr-vs-kp",
+    "model": "mlp/full",
+    "architecture_name": "A0",
+    "fs_method": "f_classif",
+    "fs_percent": 0.4,
+    "fs_n_features": 14
+}

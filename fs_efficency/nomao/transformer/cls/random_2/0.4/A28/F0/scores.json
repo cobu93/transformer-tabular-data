@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.8695907718507503,
+    "accuracy": 0.914777878513146,
+    "log_loss": 0.24870150886156658,
+    "roc_auc": 0.8695907718507504,
+    "f1": 0.9422888015717092,
+    "precision": 0.911184991688435,
+    "recall": 0.9755911517925248,
+    "inference_time": 0.42157793045043945,
+    "training_time": 479.9199761089525,
+    "dataset": "nomao",
+    "model": "transformer/cls",
+    "fold": "F0",
+    "architecture_name": "A28",
+    "fs_method": "random_2",
+    "fs_percent": 0.4,
+    "fs_n_features": 47
+}

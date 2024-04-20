@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.7744026936026935,
+    "accuracy": 0.8504158669225848,
+    "log_loss": 0.3170814249065015,
+    "roc_auc": 0.7744026936026936,
+    "f1": 0.9034283353985956,
+    "precision": 0.8869424168694242,
+    "recall": 0.9205387205387205,
+    "training_time": 78.43913507461548,
+    "inference_time": 0.16032695770263672,
+    "dataset": "adult",
+    "model": "mlp/full",
+    "fold": "F2",
+    "architecture_name": "A0",
+    "fs_method": "linear_model",
+    "fs_percent": 0.9,
+    "fs_n_features": 12
+}

@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.5938440950150552,
+    "accuracy": 0.6363636363636364,
+    "log_loss": 0.7839228315940708,
+    "roc_auc": 0.5938440950150552,
+    "f1": 0.3333333333333333,
+    "precision": 0.9090909090909091,
+    "recall": 0.20408163265306123,
+    "inference_time": 0.018845081329345703,
+    "training_time": 8.269290566444397,
+    "dataset": "australian",
+    "model": "transformer/cls",
+    "fold": "F2",
+    "architecture_name": "A19",
+    "fs_method": "random_4",
+    "fs_percent": 0.9,
+    "fs_n_features": 12
+}

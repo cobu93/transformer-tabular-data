@@ -1,0 +1,18 @@
+{
+    "balanced_accuracy": 0.7930599326599327,
+    "accuracy": 0.8479846449136277,
+    "log_loss": 0.31939992024861624,
+    "roc_auc": 0.7930599326599327,
+    "f1": 0.8998651382333108,
+    "precision": 0.9010803511141121,
+    "recall": 0.8986531986531987,
+    "inference_time": 0.9670629501342773,
+    "training_time": 269.1218492984772,
+    "dataset": "adult",
+    "model": "transformer/cls",
+    "fold": "F0",
+    "architecture_name": "A22",
+    "fs_method": "f_classif",
+    "fs_percent": 0.8,
+    "fs_n_features": 11
+}
