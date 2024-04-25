@@ -43,6 +43,16 @@ If you would want to replicate the results from scratch (may take a several amou
 - attention_evaluation_cluster.py: Evaluates the usage of cumulative attention and other feature selection algorithms at cluster level.
 
 
+## Training new datasets
+
+Given that the included code could be a looks a little bit ad-hoc to our specific experiments, a notebook describing the process for training new datasets is included. The notebook is named __example.py__.
+
+The notebook includes:
+- A process of training, evaluating and testing a simulated dataset.
+- The process of extracting attention cubes.
+- The process for computing the cumulative attentions.
+- The visualization of the cumulative attentions for the simulated data.
+
 # Cumulative attention
 
 The datafolder contains the cumulative attention vectors generated for each dataset. Nevertheless, since it could be of your interest to generate your own cumulative attention vectors, we provide the code for computing them.
