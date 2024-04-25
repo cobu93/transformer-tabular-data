@@ -222,7 +222,7 @@ for i, (train_index, test_index) in enumerate(k_fold.split(ds["features"])):
                 device=DEVICE,
                 batch_size=BATCH_SIZE,
                 max_epochs=MAX_EPOCHS,
-                train_split=skorch.dataset.CVSplit(((train_indices, val_indices),)),
+                train_split=skorch.dataset.ValidSplit(((train_indices, val_indices),)),
                 callbacks=utils.get_default_callbacks(multiclass=multiclass) + [
                     ("checkpoint", skorch.callbacks.Checkpoint(
                         monitor=CHECKPOINT_METRIC, 

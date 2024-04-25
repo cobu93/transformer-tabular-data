@@ -62,7 +62,7 @@ def build_transformer_model(
 
     model = skorch.NeuralNetClassifier(
             module=module,
-            train_split=skorch.dataset.CVSplit(((train_indices, validation_indices),)),
+            train_split=skorch.dataset.ValidSplit(((train_indices, validation_indices),)),
             callbacks=callbacks,
             **kwargs
         )

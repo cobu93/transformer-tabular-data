@@ -216,7 +216,7 @@ def trainable(
             device=device,
             batch_size=batch_size,
             max_epochs=max_epochs,
-            train_split=skorch.dataset.CVSplit(((train_indices, val_indices),)),
+            train_split=skorch.dataset.ValidSplit(((train_indices, val_indices),)),
             callbacks=utils.get_default_callbacks(multiclass=multiclass) + [
                 ("checkpoint", skorch.callbacks.Checkpoint(
                     monitor=checkpoint_metric, 
