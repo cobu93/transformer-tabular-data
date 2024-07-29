@@ -29,6 +29,26 @@
             "numerical_passthrough": false,
             "optimizer__lr": 0.0001,
             "optimizer__weight_decay": 0.0001
+        },
+        "LA3": {
+            "attn_dropout": 0.3,
+            "embed_dim": 256,
+            "ff_dropout": 0.1,
+            "n_head": 4,
+            "n_layers": 25,
+            "numerical_passthrough": false,
+            "optimizer__lr": 0.0001,
+            "optimizer__weight_decay": 0.0001
+        },
+        "LA4": {
+            "attn_dropout": 0.3,
+            "embed_dim": 256,
+            "ff_dropout": 0.1,
+            "n_head": 4,
+            "n_layers": 30,
+            "numerical_passthrough": false,
+            "optimizer__lr": 0.0001,
+            "optimizer__weight_decay": 0.0001
         }
     },
     "rnn": {

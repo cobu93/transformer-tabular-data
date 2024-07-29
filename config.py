@@ -116,3 +116,14 @@ FEATURE_SELECTION_N_CLUSTERS = {
 
 FEATURE_SELECTION_K_FOLD = 10
 
+# Ablation study
+LARGE_WORKER_JOBS = [    
+    #{"dataset": "australian", "aggregator": "cls"},
+    {"dataset": "australian", "aggregator": "sum"},
+
+
+    #{"dataset": "anneal", "aggregator": "cls"},
+    {"dataset": "anneal", "aggregator": "concatenate"},
+]
+
+
