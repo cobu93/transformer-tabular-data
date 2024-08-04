@@ -7,6 +7,14 @@ K_FOLD = 5
 PROJECT_NAME = "tabular-transformer"
 ENTITY_NAME = "tt-ndsl"
 WORKER_JOBS = [
+
+    {"dataset": "credit-g", "aggregator": "cls"},
+    {"dataset": "credit-g", "aggregator": "concatenate"},
+    {"dataset": "credit-g", "aggregator": "max"},
+    {"dataset": "credit-g", "aggregator": "mean"},
+    {"dataset": "credit-g", "aggregator": "rnn"},
+    {"dataset": "credit-g", "aggregator": "sum"},
+
     {"dataset": "jasmine", "aggregator": "cls"},
     {"dataset": "jasmine", "aggregator": "concatenate"},
     {"dataset": "jasmine", "aggregator": "max"},
@@ -74,7 +82,17 @@ WORKER_JOBS = [
 
 RUN_EXCEPTIONS = [
     {"dataset": "sylvine", "numerical_passthrough": True},
-    {"dataset": "volkert", "numerical_passthrough": True}
+    {"dataset": "volkert", "numerical_passthrough": True},
+
+    # Only wants A39
+    {"dataset": "credit-g", "numerical_passthrough": True},
+    {"dataset": "credit-g", "n_layers": 3},
+    {"dataset": "credit-g", "n_layers": 4},
+    {"dataset": "credit-g", "n_layers": 5},
+    {"dataset": "credit-g", "n_head": 8},
+    {"dataset": "credit-g", "n_head": 16},
+    {"dataset": "credit-g", "n_head": 32},
+    {"dataset": "credit-g", "embed_dim": 128},
 ]
 
 DATASETS_FILE = "datasets.csv"

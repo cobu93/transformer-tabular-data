@@ -98,14 +98,16 @@ for label in all_labels:
     assert ds_indices.shape == distances.shape
         
     selected.extend(ds_indices[np.argsort(distances)[:2]])   
-    
+
+logger.info("Adding human picked datasets:")
+selected.append(df.query("name in ['credit-g']").index[0])
+
 df["label"] = clustering.labels_
 df_selected = df.iloc[selected].reset_index(drop=True)
 
 logger.info("The selected datasets are:")
 for ds in df_selected["name"]:
     logger.info("\t" + ds)
-
 
 
 logger.info("Processing selection")
